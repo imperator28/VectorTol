@@ -33,12 +33,23 @@ Mechanical engineers in high-precision consumer electronics rely on brittle Exce
 - **Undo/redo** — 50-step history for all operations (Ctrl+Z / Ctrl+Y)
 - **Pan & zoom** — scroll wheel zoom, left-drag pan, spacebar pan, middle mouse button pan (CAD-style)
 
+### Phase 3 — Reporting Engine ✅
+- **PDF export** — one-click landscape A4 report: title block (project, author, date), annotated canvas diagram, full data table with % contribution flagged in red (>25%), WC and RSS results with color-coded PASS/FAIL, failure rate and yield
+- **XLSX export** — Excel workbook with all grid columns (including Ctr Nominal, Ctr TOL, % Contrib) plus WC/RSS results section on the same sheet
+- **CSV export** — raw stack-up data
+- **Direction lock** — constrain newly drawn vectors to horizontal or vertical only (L key / ⊥ Lock button)
+- **Magnetic snap** — arrow endpoints auto-snap to nearest existing vector endpoint within 16px (S key / 🧲 Snap button); snap takes priority over direction lock
+- **Editable project metadata** — inline project name and author fields in the toolbar
+- **Browser-compatible save/open** — falls back to browser download / file picker when running outside Tauri
+
 ### Keyboard Shortcuts
 
 | Key | Action |
 |-----|--------|
 | V | Select tool |
 | D | Draw vector tool |
+| L | Toggle direction lock (H/V only) |
+| S | Toggle magnetic snap |
 | Space (hold) | Temporary pan |
 | Middle mouse (hold) | Pan — CAD-style |
 | Scroll wheel | Zoom in/out |
@@ -48,7 +59,6 @@ Mechanical engineers in high-precision consumer electronics rely on brittle Exce
 | Ctrl+Y / Ctrl+Shift+Z | Redo |
 
 ### Planned
-- **Phase 3:** One-click PDF reports with annotated canvas diagrams
 - **Phase 4:** Smart tolerance suggestions (ISO 286 IT grades), tolerance allocation / goal seek, Monte Carlo simulation (Rust backend)
 
 ## Tech Stack
@@ -61,7 +71,8 @@ Mechanical engineers in high-precision consumer electronics rely on brittle Exce
 | Canvas | Konva.js (react-konva) |
 | State management | Zustand |
 | Precision math | decimal.js |
-| PDF export (Phase 3) | jsPDF + jspdf-autotable |
+| PDF export | jsPDF + jspdf-autotable |
+| XLSX export | SheetJS (xlsx) |
 | Monte Carlo (Phase 4) | Rust backend via Tauri IPC |
 
 ## Getting Started
@@ -105,7 +116,7 @@ This produces a portable `.exe` (Windows) or `.dmg` (macOS) in `src-tauri/target
 │   ├── engine/             # Math engine (calculations, worstCase, rss, decimal)
 │   ├── store/              # Zustand stores (project + undo/redo, UI, settings)
 │   ├── types/              # TypeScript interfaces (grid, canvas, project)
-│   └── utils/              # File I/O, CSV export
+│   └── utils/              # File I/O, CSV/PDF/XLSX export, Konva stage ref
 ├── src-tauri/              # Rust backend
 │   ├── src/commands/       # Tauri IPC commands (file read/write)
 │   └── tauri.conf.json     # App config, CSP, window settings
