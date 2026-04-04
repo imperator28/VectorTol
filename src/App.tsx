@@ -11,19 +11,22 @@ const MIN_CANVAS_PCT = 15;
 const MAX_CANVAS_PCT = 85;
 const DEFAULT_CANVAS_PCT = 45;
 
-const MIN_RESULTS_PX = 60;
+const MIN_RESULTS_PX = 220;   // enough to show cards + plots
 const MAX_RESULTS_PX = 500;
-const DEFAULT_RESULTS_PX = 260;
+const DEFAULT_RESULTS_PX = 280;
 
 export function App() {
   const [canvasPct, setCanvasPct] = useState(DEFAULT_CANVAS_PCT);
   const [resultsPx, setResultsPx] = useState(DEFAULT_RESULTS_PX);
+  const [canvasCollapsed, setCanvasCollapsed] = useState(false);
+  const [resultsCollapsed, setResultsCollapsed] = useState(false);
   const workAreaRef = useRef<HTMLDivElement>(null);
   const draggingCanvas = useRef(false);
   const draggingResults = useRef(false);
 
   // Canvas / grid divider
   const startCanvasResize = useCallback((e: React.MouseEvent) => {
+    if (canvasCollapsed) return;
     e.preventDefault();
     draggingCanvas.current = true;
 
@@ -42,10 +45,11 @@ export function App() {
 
     window.addEventListener('mousemove', onMove);
     window.addEventListener('mouseup', onUp);
-  }, []);
+  }, [canvasCollapsed]);
 
-  // Results pane divider (drag up/down to resize height)
+  // Results pane divider
   const startResultsResize = useCallback((e: React.MouseEvent) => {
+    if (resultsCollapsed) return;
     e.preventDefault();
     draggingResults.current = true;
     const startY = e.clientY;
@@ -53,7 +57,7 @@ export function App() {
 
     function onMove(ev: MouseEvent) {
       if (!draggingResults.current) return;
-      const delta = startY - ev.clientY; // dragging up = bigger
+      const delta = startY - ev.clientY;
       setResultsPx(Math.max(MIN_RESULTS_PX, Math.min(MAX_RESULTS_PX, startH + delta)));
     }
 
@@ -65,7 +69,7 @@ export function App() {
 
     window.addEventListener('mousemove', onMove);
     window.addEventListener('mouseup', onUp);
-  }, [resultsPx]);
+  }, [resultsCollapsed, resultsPx]);
 
   return (
     <div className="app">
@@ -75,26 +79,77 @@ export function App() {
           <TargetPanel />
         </div>
         <div className="work-area" ref={workAreaRef}>
-          <div className="canvas-pane" style={{ height: `${canvasPct}%` }}>
-            <CanvasToolbar />
-            <VisualCanvas />
-          </div>
-          <div
-            className="pane-divider"
-            onMouseDown={startCanvasResize}
-            title="Drag to resize"
-          />
+          {/* Canvas pane — collapsible */}
+          {canvasCollapsed ? (
+            <div className="pane-collapsed">
+              <button
+                className="pane-expand-btn"
+                onClick={() => setCanvasCollapsed(false)}
+                title="Show canvas"
+              >
+                ▾ Canvas
+              </button>
+            </div>
+          ) : (
+            <>
+              <div className="canvas-pane" style={{ height: `${canvasPct}%` }}>
+                <div className="pane-header">
+                  <CanvasToolbar />
+                  <button
+                    className="pane-collapse-btn"
+                    onClick={() => setCanvasCollapsed(true)}
+                    title="Hide canvas"
+                  >
+                    ▴
+                  </button>
+                </div>
+                <VisualCanvas />
+              </div>
+              <div
+                className="pane-divider"
+                onMouseDown={startCanvasResize}
+                title="Drag to resize"
+              />
+            </>
+          )}
+
+          {/* Grid pane — always visible */}
           <div className="grid-pane">
             <StackGrid />
           </div>
-          <div
-            className="pane-divider results-divider"
-            onMouseDown={startResultsResize}
-            title="Drag to resize results"
-          />
-          <div className="results-pane" style={{ height: resultsPx }}>
-            <ResultsFooter />
-          </div>
+
+          {/* Results pane — collapsible */}
+          {resultsCollapsed ? (
+            <div className="pane-collapsed pane-collapsed-bottom">
+              <button
+                className="pane-expand-btn"
+                onClick={() => setResultsCollapsed(false)}
+                title="Show results"
+              >
+                ▴ Results
+              </button>
+            </div>
+          ) : (
+            <>
+              <div className="pane-divider results-divider">
+                <button
+                  className="pane-collapse-btn pane-collapse-btn-down"
+                  onClick={() => setResultsCollapsed(true)}
+                  title="Hide results"
+                >
+                  ▾
+                </button>
+                <div
+                  className="pane-divider-drag"
+                  onMouseDown={startResultsResize}
+                  title="Drag to resize results"
+                />
+              </div>
+              <div className="results-pane" style={{ height: resultsPx }}>
+                <ResultsFooter />
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>

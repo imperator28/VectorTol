@@ -126,6 +126,7 @@ interface ProjectState {
   removeRow: (id: RowId) => void;
   updateRow: (id: RowId, updates: Partial<StackRow>) => void;
   reorderRows: (newRows: StackRow[]) => void;
+  flipAllDirections: () => void;
   setTarget: (target: TargetScenario) => void;
   setMetadata: (metadata: Partial<VtolMetadata>) => void;
   loadProject: (metadata: VtolMetadata, rows: StackRow[], target: TargetScenario, filePath: string | null, canvasData?: CanvasData) => void;
@@ -222,6 +223,21 @@ export const useProjectStore = create<ProjectState>((set, get) => {
       const state = get();
       const computed = recomputeState(newRows, state.target);
       set({ rows: newRows, isDirty: true, ...computed });
+    },
+
+    flipAllDirections: () => {
+      pushHistory(snapshot());
+      const state = get();
+      const rows = state.rows.map((r) => ({ ...r, direction: (r.direction === 1 ? -1 : 1) as Direction }));
+      const vectors = state.canvasData.vectors.map((v) => ({
+        ...v,
+        startX: v.endX,
+        startY: v.endY,
+        endX: v.startX,
+        endY: v.startY,
+      }));
+      const computed = recomputeState(rows, state.target);
+      set({ rows, isDirty: true, canvasData: { ...state.canvasData, vectors }, ...computed });
     },
 
     setTarget: (target: TargetScenario) => {

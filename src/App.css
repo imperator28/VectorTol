@@ -112,17 +112,104 @@
   overflow: hidden;
 }
 
+.pane-header {
+  display: flex;
+  align-items: center;
+}
+
+.pane-header .canvas-toolbar {
+  flex: 1;
+}
+
 .pane-divider {
   height: 5px;
   background: #d0d0d0;
   cursor: row-resize;
   flex-shrink: 0;
   transition: background 0.15s;
+  position: relative;
 }
 
 .pane-divider:hover,
 .pane-divider:active {
   background: #3b82f6;
+}
+
+/* Results divider is a flex row: collapse button + drag zone */
+.results-divider {
+  display: flex;
+  align-items: center;
+  height: auto;
+  cursor: default;
+  gap: 0;
+  padding: 0;
+}
+
+.pane-divider-drag {
+  flex: 1;
+  height: 5px;
+  cursor: row-resize;
+  background: #d0d0d0;
+  transition: background 0.15s;
+}
+
+.pane-divider-drag:hover,
+.pane-divider-drag:active {
+  background: #3b82f6;
+}
+
+/* Collapse / expand buttons */
+.pane-collapse-btn {
+  background: #e8e8e8;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 10px;
+  color: #666;
+  padding: 1px 6px;
+  line-height: 1;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+
+.pane-collapse-btn:hover {
+  background: #d0d0d0;
+  color: #333;
+}
+
+.pane-collapse-btn-down {
+  margin: 0 2px;
+  padding: 0px 8px;
+}
+
+.pane-collapsed {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  background: #f0f0f0;
+  border-bottom: 1px solid #e0e0e0;
+  padding: 2px 8px;
+}
+
+.pane-collapsed-bottom {
+  border-bottom: none;
+  border-top: 1px solid #e0e0e0;
+}
+
+.pane-expand-btn {
+  background: none;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 11px;
+  color: #555;
+  padding: 2px 10px;
+  transition: background 0.15s;
+}
+
+.pane-expand-btn:hover {
+  background: #ddd;
+  color: #111;
 }
 
 .grid-pane {
@@ -181,9 +268,7 @@
   background: #ffffff;
 }
 
-.results-divider {
-  border-top: 1px solid #c0c0c0;
-}
+/* (results-divider styles are in pane-divider section) */
 
 /* Results Footer */
 .results-footer {
@@ -369,6 +454,14 @@
   padding: 4px 8px;
   background: #fafafa;
   border-bottom: 1px solid #e0e0e0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  flex-shrink: 0;
+  scrollbar-width: none; /* Firefox */
+}
+
+.canvas-toolbar::-webkit-scrollbar {
+  display: none;
 }
 
 .canvas-toolbar button {

@@ -26,6 +26,7 @@ export function CanvasToolbar() {
 
   const setCanvasImage = useProjectStore((s) => s.setCanvasImage);
   const updateVector = useProjectStore((s) => s.updateVector);
+  const flipAllDirections = useProjectStore((s) => s.flipAllDirections);
   const canvasData = useProjectStore((s) => s.canvasData);
   const undo = useProjectStore((s) => s.undo);
   const redo = useProjectStore((s) => s.redo);
@@ -147,6 +148,12 @@ export function CanvasToolbar() {
         title="Magnetic Snap — auto-snap to existing vector endpoints (S)"
       >
         🧲 Snap
+      </button>
+      <button
+        onClick={flipAllDirections}
+        title="Flip all vector directions (+/- swap)"
+      >
+        ⇄ Flip All
       </button>
       <span className="canvas-toolbar-sep" />
       <button onClick={handleImageImport} title="Import background image">
