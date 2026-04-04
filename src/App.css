@@ -625,109 +625,213 @@
 }
 
 .goalseek-panel h3 {
-  font-size: 14px;
+  font-size: 13px;
+  font-weight: 700;
   margin-bottom: 8px;
   color: #333;
 }
 
-/* Summary strip */
-.goalseek-summary {
+/* Status banner */
+.gs-banner {
+  border-radius: 4px;
+  padding: 5px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.gs-banner-pass { background: #dcfce7; color: #166534; }
+.gs-banner-warn { background: #fef9c3; color: #854d0e; }
+.gs-banner-fail { background: #fee2e2; color: #991b1b; }
+
+/* Budget strip */
+.gs-budget-strip {
   display: flex;
-  align-items: center;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: 6px;
   margin-bottom: 8px;
-  font-size: 12px;
-  background: #f5f5f5;
+  background: #f8f8f8;
   border-radius: 4px;
   padding: 5px 8px;
 }
-
-.goalseek-label {
-  color: #888;
+.gs-bud-item {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
 }
-
-.goalseek-value {
+.gs-bud-label {
+  font-size: 9px;
+  text-transform: uppercase;
+  color: #999;
+  letter-spacing: 0.4px;
+}
+.gs-bud-val {
   font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 11px;
   font-weight: 600;
-  font-size: 11px;
+  color: #333;
 }
+.gs-bud-ok  { color: #16a34a; }
+.gs-bud-over{ color: #dc2626; }
 
-.goalseek-new {
-  color: #16a34a;
-}
-
-.goalseek-arrow {
-  color: #aaa;
-}
-
-.goalseek-pct {
-  font-size: 11px;
-  font-weight: 700;
-  color: #16a34a;
-  background: #dcfce7;
+/* Pass / fail badges */
+.gs-badge {
+  display: inline-block;
   border-radius: 3px;
   padding: 1px 5px;
+  font-size: 10px;
+  font-weight: 700;
+}
+.gs-badge-pass { background: #dcfce7; color: #166534; }
+.gs-badge-fail { background: #fee2e2; color: #991b1b; }
+
+/* Strategies container */
+.gs-strategies {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
 }
 
-/* Per-row table */
-.goalseek-table {
+/* Strategy card */
+.gs-strategy {
+  border: 1px solid #e0e0e0;
+  border-radius: 5px;
+  overflow: hidden;
+  background: #fff;
+}
+.gs-strategy-feasible   { border-color: #d1d5db; }
+.gs-strategy-infeasible { background: #fafafa; opacity: 0.8; }
+.gs-strategy-recommended { border-color: #3b82f6; border-width: 2px; }
+
+/* Card header (accordion button) */
+.gs-strategy-header {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 6px 8px 4px;
+  cursor: pointer;
+  text-align: left;
+}
+.gs-strategy-header:hover { background: #f5f5f5; }
+.gs-strategy-icon { font-size: 13px; flex-shrink: 0; }
+.gs-strategy-label {
+  flex: 1;
+  font-size: 11px;
+  font-weight: 600;
+  color: #222;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+.gs-strategy-arrow { font-size: 9px; color: #aaa; flex-shrink: 0; }
+
+/* Recommended badge */
+.gs-recommended-badge {
+  font-size: 9px;
+  font-weight: 700;
+  background: #3b82f6;
+  color: #fff;
+  border-radius: 3px;
+  padding: 1px 5px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+/* Quick summary line */
+.gs-strategy-summary {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px 6px 26px;
+  flex-wrap: wrap;
+}
+.gs-strategy-wc {
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 10px;
+  color: #555;
+}
+.gs-infeasible-note {
+  font-size: 10px;
+  color: #b45309;
+  font-style: italic;
+}
+
+/* Expanded detail */
+.gs-strategy-detail {
+  border-top: 1px solid #eee;
+  padding: 6px 8px 8px;
+  background: #fafafa;
+}
+.gs-strategy-desc {
+  font-size: 10px;
+  color: #666;
+  line-height: 1.45;
+  margin-bottom: 6px;
+}
+
+/* Change table */
+.gs-change-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 11px;
-}
-
-.goalseek-table th {
-  text-align: left;
-  color: #888;
-  font-weight: 600;
   font-size: 10px;
+}
+.gs-change-table th {
+  text-align: left;
+  color: #999;
+  font-size: 9px;
   text-transform: uppercase;
   letter-spacing: 0.4px;
-  padding: 3px 4px;
+  padding: 2px 3px;
   border-bottom: 1px solid #e8e8e8;
 }
-
-.goalseek-table td {
-  padding: 3px 4px;
+.gs-change-table td {
+  padding: 3px 3px;
   border-bottom: 1px solid #f0f0f0;
   vertical-align: middle;
 }
-
-.goalseek-name {
-  max-width: 80px;
+.gs-part-name {
+  max-width: 70px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   color: #444;
 }
-
-.goalseek-num {
+.gs-num {
   font-family: 'SF Mono', 'Fira Code', monospace;
   font-size: 10px;
   text-align: right;
+  white-space: nowrap;
 }
-
-.goalseek-contrib {
+.gs-grade {
+  margin-left: 3px;
+  font-size: 9px;
   color: #888;
 }
-
-.goalseek-row-improved td {
-  background: #f0fdf4;
-}
-
-.goalseek-suggestion {
-  color: #16a34a;
-  font-weight: 700;
-}
-
-.goalseek-ok {
-  color: #bbb;
-}
-
-.goalseek-hint {
-  font-size: 11px;
+.gs-tighten { color: #0369a1; }
+.gs-loosen  { color: #16a34a; }
+.gs-no-changes {
+  font-size: 10px;
   color: #aaa;
   font-style: italic;
+  margin: 0;
+}
+
+/* Global advisory & ok text */
+.gs-all-ok {
+  font-size: 11px;
+  color: #16a34a;
+  font-style: italic;
+  margin-top: 4px;
+}
+.gs-advisory {
+  font-size: 10px;
+  color: #b45309;
+  background: #fef9c3;
+  border-radius: 4px;
+  padding: 5px 8px;
   margin-top: 6px;
+  line-height: 1.45;
 }
