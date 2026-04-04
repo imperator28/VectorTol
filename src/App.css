@@ -167,15 +167,35 @@
   font-size: 12px;
 }
 
+.target-hint {
+  font-size: 11px;
+  color: #999;
+  font-style: italic;
+}
+
 /* Results Footer */
 .results-footer {
   display: flex;
-  align-items: flex-start;
-  gap: 24px;
+  flex-direction: column;
+  gap: 8px;
   padding: 10px 16px;
   background: #ffffff;
   border-top: 2px solid #e0e0e0;
   min-height: 80px;
+  max-height: 360px;
+  overflow-y: auto;
+}
+
+.results-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 24px;
+}
+
+.results-plots {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
 }
 
 .results-empty {
@@ -231,7 +251,6 @@
 
 /* Distribution Plot */
 .distribution-plot {
-  margin-left: auto;
   flex-shrink: 0;
 }
 
@@ -244,6 +263,83 @@
 }
 
 .distribution-plot svg {
+  display: block;
+}
+
+/* Monte Carlo Panel */
+.mc-panel {
+  flex-shrink: 0;
+}
+
+.mc-title {
+  font-size: 11px;
+  text-transform: uppercase;
+  color: #888;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+
+.mc-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.mc-iter-label {
+  font-size: 11px;
+  color: #555;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.mc-iter-select {
+  padding: 2px 4px;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  font-size: 11px;
+}
+
+.mc-run-btn {
+  padding: 3px 10px;
+  border: 1px solid #007AFF;
+  border-radius: 4px;
+  background: #007AFF;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.mc-run-btn:hover:not(:disabled) {
+  background: #0062d6;
+}
+
+.mc-run-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.mc-elapsed {
+  font-size: 10px;
+  color: #999;
+}
+
+.mc-stats {
+  margin-bottom: 4px;
+}
+
+.mc-stats-table {
+  font-size: 11px;
+}
+
+.mc-stats-table td {
+  padding: 1px 6px 1px 0;
+}
+
+.mc-panel svg {
   display: block;
 }
 
