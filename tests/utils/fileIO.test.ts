@@ -3,6 +3,7 @@ import { serializeProject, deserializeProject, rowsToCsv } from '../../src/utils
 import type { StackRow } from '../../src/types/grid';
 import { createEmptyRow } from '../../src/types/grid';
 import type { VtolMetadata, TargetScenario } from '../../src/types/project';
+import { DEFAULT_CANVAS_DATA } from '../../src/types/canvas';
 
 const testTarget: TargetScenario = { type: 'clearance', minGap: '0.05', maxGap: null };
 
@@ -37,7 +38,7 @@ const testRows: StackRow[] = [
 
 describe('serializeProject / deserializeProject', () => {
   it('round-trips project data', () => {
-    const json = serializeProject(testMetadata, testRows, testTarget);
+    const json = serializeProject(testMetadata, testRows, testTarget, { ...DEFAULT_CANVAS_DATA });
     const parsed = deserializeProject(json);
 
     expect(parsed.metadata.projectName).toBe('Test Project');
@@ -49,7 +50,7 @@ describe('serializeProject / deserializeProject', () => {
   });
 
   it('includes canvas stub data', () => {
-    const json = serializeProject(testMetadata, testRows, testTarget);
+    const json = serializeProject(testMetadata, testRows, testTarget, { ...DEFAULT_CANVAS_DATA });
     const parsed = deserializeProject(json);
     expect(parsed.canvasData.vectors).toEqual([]);
     expect(parsed.canvasData.image).toBeNull();

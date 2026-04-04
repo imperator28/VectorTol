@@ -1,4 +1,5 @@
 import type { StackRow } from './grid';
+import type { CanvasData } from './canvas';
 
 export type TargetType = 'clearance' | 'interference' | 'flush' | 'proud' | 'recess';
 
@@ -20,10 +21,6 @@ export interface VtolFile {
   version: 1;
   metadata: VtolMetadata;
   gridData: StackRow[];
-  canvasData: {
-    vectors: unknown[];
-    image: string | null;
-    imageTransform: { x: number; y: number; scale: number; rotation: number };
-  };
+  canvasData: CanvasData;
   settings: Record<string, unknown>;
 }

@@ -7,6 +7,7 @@ export function Toolbar() {
   const metadata = useProjectStore((s) => s.metadata);
   const rows = useProjectStore((s) => s.rows);
   const target = useProjectStore((s) => s.target);
+  const canvasData = useProjectStore((s) => s.canvasData);
   const isDirty = useProjectStore((s) => s.isDirty);
   const addRow = useProjectStore((s) => s.addRow);
   const removeRow = useProjectStore((s) => s.removeRow);
@@ -31,7 +32,7 @@ export function Toolbar() {
       if (!filePath) return;
       const content = await readTextFile(filePath as string);
       const file = deserializeProject(content);
-      loadProject(file.metadata, file.gridData, file.metadata.designIntent, filePath as string);
+      loadProject(file.metadata, file.gridData, file.metadata.designIntent, filePath as string, file.canvasData);
     } catch (err) {
       console.error('Failed to open file:', err);
     }
@@ -46,13 +47,13 @@ export function Toolbar() {
         defaultPath: `${metadata.projectName}.vtol`,
       });
       if (!filePath) return;
-      const json = serializeProject(metadata, rows, target);
+      const json = serializeProject(metadata, rows, target, canvasData);
       await writeTextFile(filePath, json);
       markClean();
     } catch (err) {
       console.error('Failed to save file:', err);
     }
-  }, [metadata, rows, target, markClean]);
+  }, [metadata, rows, target, canvasData, markClean]);
 
   const handleExportCsv = useCallback(async () => {
     try {

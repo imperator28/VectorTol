@@ -1,10 +1,13 @@
 import type { StackRow } from '../types/grid';
 import type { VtolFile, VtolMetadata, TargetScenario } from '../types/project';
+import type { CanvasData } from '../types/canvas';
+import { DEFAULT_CANVAS_DATA } from '../types/canvas';
 
 export function serializeProject(
   metadata: VtolMetadata,
   rows: StackRow[],
   target: TargetScenario,
+  canvasData: CanvasData,
 ): string {
   const file: VtolFile = {
     version: 1,
@@ -14,11 +17,7 @@ export function serializeProject(
       designIntent: target,
     },
     gridData: rows,
-    canvasData: {
-      vectors: [],
-      image: null,
-      imageTransform: { x: 0, y: 0, scale: 1, rotation: 0 },
-    },
+    canvasData,
     settings: {},
   };
   return JSON.stringify(file, null, 2);
@@ -28,6 +27,10 @@ export function deserializeProject(json: string): VtolFile {
   const file = JSON.parse(json) as VtolFile;
   if (file.version !== 1) {
     throw new Error(`Unsupported .vtol version: ${file.version}`);
+  }
+  // Backfill canvasData for files saved before Phase 2
+  if (!file.canvasData || !Array.isArray(file.canvasData.vectors)) {
+    file.canvasData = { ...DEFAULT_CANVAS_DATA };
   }
   return file;
 }
