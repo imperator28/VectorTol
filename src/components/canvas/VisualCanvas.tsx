@@ -165,12 +165,13 @@ export function VisualCanvas() {
     [snapEnabled, stageScale, canvasData.vectors],
   );
 
-  /** Apply direction lock: constrain pos to horizontal or vertical from origin */
+  /** Constrain pos to horizontal or vertical from origin when locked is true */
   function applyDirectionLock(
     pos: { x: number; y: number },
     origin: { x: number; y: number },
+    locked: boolean,
   ): { x: number; y: number } {
-    if (!directionLock) return pos;
+    if (!locked) return pos;
     const dx = Math.abs(pos.x - origin.x);
     const dy = Math.abs(pos.y - origin.y);
     return dx >= dy
@@ -206,13 +207,14 @@ export function VisualCanvas() {
     const raw = getPointerPos();
     if (!raw) return;
 
-    // Snap end point first; if no snap, apply direction lock
+    // Snap end point first; if no snap, apply direction lock.
+    // Lock activates via the toolbar toggle (L) OR by holding Shift.
     const snapPt = findSnap(raw);
     let end: { x: number; y: number };
     if (snapPt) {
       end = snapPt;
     } else {
-      end = applyDirectionLock(raw, drawStart);
+      end = applyDirectionLock(raw, drawStart, directionLock || e.evt.shiftKey);
     }
     setDrawEnd(end);
     setSnapIndicator(snapPt);

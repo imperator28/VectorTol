@@ -138,7 +138,7 @@ export function CanvasToolbar() {
       <button
         className={directionLock ? 'canvas-tool-active' : ''}
         onClick={toggleDirectionLock}
-        title="Direction Lock — constrain arrows to horizontal or vertical only (L)"
+        title="Direction Lock — constrain arrows to H/V only. Toggle with L, or hold Shift while drawing"
       >
         ⊥ Lock
       </button>
