@@ -8,11 +8,15 @@ interface UiState {
   currentStrokeWidth: number;
   currentVectorColor: string;
   highlightColor: string;
+  directionLock: boolean;   // Constrain drawing to horizontal or vertical only
+  snapEnabled: boolean;     // Magnetic snap to existing vector endpoints
   setSelectedRowId: (id: RowId | null) => void;
   setCanvasTool: (tool: CanvasTool) => void;
   setCurrentStrokeWidth: (w: number) => void;
   setCurrentVectorColor: (color: string) => void;
   setHighlightColor: (color: string) => void;
+  toggleDirectionLock: () => void;
+  toggleSnap: () => void;
 }
 
 export const useUiStore = create<UiState>((set) => ({
@@ -21,9 +25,13 @@ export const useUiStore = create<UiState>((set) => ({
   currentStrokeWidth: 2,
   currentVectorColor: '#007AFF',
   highlightColor: '#FF9500',
+  directionLock: false,
+  snapEnabled: true,
   setSelectedRowId: (id) => set({ selectedRowId: id }),
   setCanvasTool: (tool) => set({ canvasTool: tool }),
   setCurrentStrokeWidth: (w) => set({ currentStrokeWidth: w }),
   setCurrentVectorColor: (color) => set({ currentVectorColor: color }),
   setHighlightColor: (color) => set({ highlightColor: color }),
+  toggleDirectionLock: () => set((s) => ({ directionLock: !s.directionLock })),
+  toggleSnap: () => set((s) => ({ snapEnabled: !s.snapEnabled })),
 }));

@@ -1,9 +1,12 @@
 import { useRef, useState, useCallback, useEffect } from 'react';
-import { Stage, Layer, Image as KonvaImage, Line } from 'react-konva';
+import { Stage, Layer, Image as KonvaImage, Line, Circle } from 'react-konva';
 import { useProjectStore } from '../../store/projectStore';
 import { useUiStore } from '../../store/uiStore';
 import { VectorArrow } from './VectorArrow';
+import { setStageRef } from '../../utils/stageRef';
 import type Konva from 'konva';
+
+const SNAP_RADIUS_PX = 16; // screen pixels within which endpoint snapping activates
 
 /** Load an HTML Image from a data URL */
 function useImage(src: string | null): HTMLImageElement | null {
@@ -35,6 +38,10 @@ export function VisualCanvas() {
   const currentStrokeWidth = useUiStore((s) => s.currentStrokeWidth);
   const currentVectorColor = useUiStore((s) => s.currentVectorColor);
   const highlightColor = useUiStore((s) => s.highlightColor);
+  const directionLock = useUiStore((s) => s.directionLock);
+  const snapEnabled = useUiStore((s) => s.snapEnabled);
+  const toggleDirectionLock = useUiStore((s) => s.toggleDirectionLock);
+  const toggleSnap = useUiStore((s) => s.toggleSnap);
 
   // Canvas dimensions
   const [dims, setDims] = useState({ width: 600, height: 400 });
@@ -44,15 +51,21 @@ export function VisualCanvas() {
   // Drawing state
   const [drawStart, setDrawStart] = useState<{ x: number; y: number } | null>(null);
   const [drawEnd, setDrawEnd] = useState<{ x: number; y: number } | null>(null);
-  // Spacebar pan override — tracks tool to restore after spacebar release
+  // Snap indicator: canvas-space point that is currently snapping
+  const [snapIndicator, setSnapIndicator] = useState<{ x: number; y: number } | null>(null);
+  // Spacebar pan override
   const [spaceToolOverride, setSpaceToolOverride] = useState<string | null>(null);
   // Middle-button pan
   const middlePanRef = useRef<{ lastX: number; lastY: number } | null>(null);
 
   const bgImage = useImage(canvasData.image);
-
-  // Effective tool: spacebar overrides to 'select' (pan mode)
   const effectiveTool = spaceToolOverride !== null ? 'select' : canvasTool;
+
+  // Register stage ref for PDF export
+  useEffect(() => {
+    setStageRef(stageRef.current);
+    return () => setStageRef(null);
+  }, []);
 
   // Resize observer
   useEffect(() => {
@@ -73,7 +86,6 @@ export function VisualCanvas() {
     function onKeyDown(e: KeyboardEvent) {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
 
-      // Ctrl+Z = undo, Ctrl+Y / Ctrl+Shift+Z = redo
       if (e.ctrlKey || e.metaKey) {
         if (e.key === 'z' && !e.shiftKey) { e.preventDefault(); undo(); return; }
         if (e.key === 'y' || (e.key === 'z' && e.shiftKey)) { e.preventDefault(); redo(); return; }
@@ -81,13 +93,15 @@ export function VisualCanvas() {
 
       if (e.key === 'v' || e.key === 'V') setCanvasTool('select');
       if (e.key === 'd' || e.key === 'D') setCanvasTool('draw');
+      if (e.key === 'l' || e.key === 'L') toggleDirectionLock();
+      if (e.key === 's' || e.key === 'S') toggleSnap();
 
-      // Spacebar = temporary pan mode
       if (e.key === ' ' && spaceToolOverride === null) {
         e.preventDefault();
         setSpaceToolOverride(canvasTool);
         setDrawStart(null);
         setDrawEnd(null);
+        setSnapIndicator(null);
       }
 
       if ((e.key === 'Delete' || e.key === 'Backspace') && selectedRowId) {
@@ -97,15 +111,14 @@ export function VisualCanvas() {
       if (e.key === 'Escape') {
         setDrawStart(null);
         setDrawEnd(null);
+        setSnapIndicator(null);
         setSelectedRowId(null);
       }
     }
 
     function onKeyUp(e: KeyboardEvent) {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
-      if (e.key === ' ' && spaceToolOverride !== null) {
-        setSpaceToolOverride(null);
-      }
+      if (e.key === ' ' && spaceToolOverride !== null) setSpaceToolOverride(null);
     }
 
     window.addEventListener('keydown', onKeyDown);
@@ -114,9 +127,9 @@ export function VisualCanvas() {
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
     };
-  }, [selectedRowId, canvasTool, spaceToolOverride, setCanvasTool, removeVector, setSelectedRowId, undo, redo]);
+  }, [selectedRowId, canvasTool, spaceToolOverride, setCanvasTool, removeVector, setSelectedRowId, undo, redo, toggleDirectionLock, toggleSnap]);
 
-  // Get real canvas coords accounting for pan/zoom
+  // Get canvas-space coordinates from the current pointer position
   const getPointerPos = useCallback(() => {
     const stage = stageRef.current;
     if (!stage) return null;
@@ -128,22 +141,60 @@ export function VisualCanvas() {
     };
   }, [stagePos, stageScale]);
 
+  /** Find the nearest vector endpoint within SNAP_RADIUS_PX screen pixels */
+  const findSnap = useCallback(
+    (pos: { x: number; y: number }): { x: number; y: number } | null => {
+      if (!snapEnabled) return null;
+      const radiusCanvas = SNAP_RADIUS_PX / stageScale;
+      let best: { x: number; y: number } | null = null;
+      let bestDist = radiusCanvas;
+      for (const v of canvasData.vectors) {
+        for (const pt of [
+          { x: v.startX, y: v.startY },
+          { x: v.endX, y: v.endY },
+        ]) {
+          const d = Math.hypot(pt.x - pos.x, pt.y - pos.y);
+          if (d < bestDist) {
+            bestDist = d;
+            best = pt;
+          }
+        }
+      }
+      return best;
+    },
+    [snapEnabled, stageScale, canvasData.vectors],
+  );
+
+  /** Apply direction lock: constrain pos to horizontal or vertical from origin */
+  function applyDirectionLock(
+    pos: { x: number; y: number },
+    origin: { x: number; y: number },
+  ): { x: number; y: number } {
+    if (!directionLock) return pos;
+    const dx = Math.abs(pos.x - origin.x);
+    const dy = Math.abs(pos.y - origin.y);
+    return dx >= dy
+      ? { x: pos.x, y: origin.y }  // horizontal
+      : { x: origin.x, y: pos.y }; // vertical
+  }
+
   function handleMouseDown(e: Konva.KonvaEventObject<MouseEvent>) {
-    // Middle button (button 1) → start pan regardless of tool
     if (e.evt.button === 1) {
       e.evt.preventDefault();
       middlePanRef.current = { lastX: e.evt.clientX, lastY: e.evt.clientY };
       return;
     }
     if (effectiveTool !== 'draw') return;
-    const pos = getPointerPos();
-    if (!pos) return;
-    setDrawStart(pos);
-    setDrawEnd(pos);
+    const raw = getPointerPos();
+    if (!raw) return;
+    // Snap start point to nearest endpoint
+    const snapped = findSnap(raw) ?? raw;
+    setDrawStart(snapped);
+    setDrawEnd(snapped);
+    setSnapIndicator(findSnap(raw) ? snapped : null);
   }
 
   function handleMouseMove(e: Konva.KonvaEventObject<MouseEvent>) {
-    // Middle button pan
     if (middlePanRef.current) {
       const dx = e.evt.clientX - middlePanRef.current.lastX;
       const dy = e.evt.clientY - middlePanRef.current.lastY;
@@ -152,13 +203,22 @@ export function VisualCanvas() {
       return;
     }
     if (!drawStart) return;
-    const pos = getPointerPos();
-    if (!pos) return;
-    setDrawEnd(pos);
+    const raw = getPointerPos();
+    if (!raw) return;
+
+    // Snap end point first; if no snap, apply direction lock
+    const snapPt = findSnap(raw);
+    let end: { x: number; y: number };
+    if (snapPt) {
+      end = snapPt;
+    } else {
+      end = applyDirectionLock(raw, drawStart);
+    }
+    setDrawEnd(end);
+    setSnapIndicator(snapPt);
   }
 
   function handleMouseUp(e: Konva.KonvaEventObject<MouseEvent>) {
-    // Middle button release
     if (e.evt.button === 1) {
       middlePanRef.current = null;
       return;
@@ -166,13 +226,13 @@ export function VisualCanvas() {
     if (!drawStart || !drawEnd) return;
     const dx = drawEnd.x - drawStart.x;
     const dy = drawEnd.y - drawStart.y;
-    const dist = Math.sqrt(dx * dx + dy * dy);
-    if (dist > 10) {
+    if (Math.sqrt(dx * dx + dy * dy) > 5 / stageScale) {
       const id = addVector(drawStart.x, drawStart.y, drawEnd.x, drawEnd.y, currentStrokeWidth, currentVectorColor);
       setSelectedRowId(id);
     }
     setDrawStart(null);
     setDrawEnd(null);
+    setSnapIndicator(null);
   }
 
   function handleWheel(e: Konva.KonvaEventObject<WheelEvent>) {
@@ -200,12 +260,9 @@ export function VisualCanvas() {
   }
 
   function handleStageClick(e: Konva.KonvaEventObject<MouseEvent>) {
-    if (e.target === e.target.getStage()) {
-      setSelectedRowId(null);
-    }
+    if (e.target === e.target.getStage()) setSelectedRowId(null);
   }
 
-  // Drag-and-drop image import
   function handleDrop(e: React.DragEvent) {
     e.preventDefault();
     const file = e.dataTransfer.files[0];
@@ -217,17 +274,12 @@ export function VisualCanvas() {
     reader.readAsDataURL(file);
   }
 
-  function handleDragOver(e: React.DragEvent) {
-    e.preventDefault();
-  }
-
   // Build row label map
   const rowLabelMap = new Map<string, string>();
-  rows.forEach((r, i) => {
-    rowLabelMap.set(r.id, r.component || `Row ${i + 1}`);
-  });
+  rows.forEach((r, i) => rowLabelMap.set(r.id, r.component || `Row ${i + 1}`));
 
   const { imageTransform } = canvasData;
+  const snapCircleRadius = SNAP_RADIUS_PX / stageScale;
 
   const isMiddlePanning = middlePanRef.current !== null;
   let cursor = 'default';
@@ -240,7 +292,7 @@ export function VisualCanvas() {
       ref={containerRef}
       className="visual-canvas"
       onDrop={handleDrop}
-      onDragOver={handleDragOver}
+      onDragOver={(e) => e.preventDefault()}
       onMouseDown={(e) => { if (e.button === 1) e.preventDefault(); }}
       style={{ cursor }}
     >
@@ -279,7 +331,7 @@ export function VisualCanvas() {
           )}
         </Layer>
 
-        {/* Layer 1: Vectors */}
+        {/* Layer 1: Vectors + drawing preview */}
         <Layer>
           {canvasData.vectors.map((v) => (
             <VectorArrow
@@ -293,7 +345,7 @@ export function VisualCanvas() {
             />
           ))}
 
-          {/* Drawing preview — also viewport-invariant */}
+          {/* Drawing preview line */}
           {drawStart && drawEnd && (
             <Line
               points={[drawStart.x, drawStart.y, drawEnd.x, drawEnd.y]}
@@ -301,6 +353,31 @@ export function VisualCanvas() {
               strokeWidth={currentStrokeWidth / stageScale}
               dash={[6 / stageScale, 3 / stageScale]}
               opacity={0.7}
+            />
+          )}
+
+          {/* Magnetic snap indicator — ring at snap target */}
+          {snapIndicator && (
+            <Circle
+              x={snapIndicator.x}
+              y={snapIndicator.y}
+              radius={snapCircleRadius}
+              stroke={highlightColor}
+              strokeWidth={2 / stageScale}
+              fill={highlightColor}
+              opacity={0.25}
+              listening={false}
+            />
+          )}
+
+          {/* Start point dot while drawing */}
+          {drawStart && (
+            <Circle
+              x={drawStart.x}
+              y={drawStart.y}
+              radius={4 / stageScale}
+              fill={currentVectorColor}
+              listening={false}
             />
           )}
         </Layer>

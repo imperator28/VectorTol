@@ -19,6 +19,11 @@ export function CanvasToolbar() {
   const setHighlightColor = useUiStore((s) => s.setHighlightColor);
   const selectedRowId = useUiStore((s) => s.selectedRowId);
 
+  const directionLock = useUiStore((s) => s.directionLock);
+  const toggleDirectionLock = useUiStore((s) => s.toggleDirectionLock);
+  const snapEnabled = useUiStore((s) => s.snapEnabled);
+  const toggleSnap = useUiStore((s) => s.toggleSnap);
+
   const setCanvasImage = useProjectStore((s) => s.setCanvasImage);
   const updateVector = useProjectStore((s) => s.updateVector);
   const canvasData = useProjectStore((s) => s.canvasData);
@@ -128,6 +133,21 @@ export function CanvasToolbar() {
         )}
       </div>
 
+      <span className="canvas-toolbar-sep" />
+      <button
+        className={directionLock ? 'canvas-tool-active' : ''}
+        onClick={toggleDirectionLock}
+        title="Direction Lock — constrain arrows to horizontal or vertical only (L)"
+      >
+        ⊥ Lock
+      </button>
+      <button
+        className={snapEnabled ? 'canvas-tool-active' : ''}
+        onClick={toggleSnap}
+        title="Magnetic Snap — auto-snap to existing vector endpoints (S)"
+      >
+        🧲 Snap
+      </button>
       <span className="canvas-toolbar-sep" />
       <button onClick={handleImageImport} title="Import background image">
         🖼 Image

@@ -2,6 +2,9 @@ import { useCallback } from 'react';
 import { useProjectStore } from '../../store/projectStore';
 import { useUiStore } from '../../store/uiStore';
 import { serializeProject, deserializeProject, rowsToCsv } from '../../utils/fileIO';
+import { getStageDataUrl } from '../../utils/stageRef';
+import { exportPdf } from '../../utils/pdfExport';
+import { exportXlsx } from '../../utils/xlsxExport';
 
 export function Toolbar() {
   const metadata = useProjectStore((s) => s.metadata);
@@ -9,6 +12,8 @@ export function Toolbar() {
   const target = useProjectStore((s) => s.target);
   const canvasData = useProjectStore((s) => s.canvasData);
   const isDirty = useProjectStore((s) => s.isDirty);
+  const results = useProjectStore((s) => s.results);
+  const derivedRows = useProjectStore((s) => s.derivedRows);
   const addRow = useProjectStore((s) => s.addRow);
   const removeRow = useProjectStore((s) => s.removeRow);
   const loadProject = useProjectStore((s) => s.loadProject);
@@ -72,10 +77,17 @@ export function Toolbar() {
   }, [metadata, rows]);
 
   const handleDeleteRow = useCallback(() => {
-    if (selectedRowId) {
-      removeRow(selectedRowId);
-    }
+    if (selectedRowId) removeRow(selectedRowId);
   }, [selectedRowId, removeRow]);
+
+  const handleExportPdf = useCallback(() => {
+    const canvasDataUrl = getStageDataUrl();
+    exportPdf(metadata, rows, target, results, derivedRows, canvasDataUrl);
+  }, [metadata, rows, target, results, derivedRows]);
+
+  const handleExportXlsx = useCallback(() => {
+    exportXlsx(rows, derivedRows, metadata.projectName);
+  }, [rows, derivedRows, metadata.projectName]);
 
   return (
     <div className="toolbar">
@@ -89,6 +101,8 @@ export function Toolbar() {
         <button onClick={handleDeleteRow} title="Delete Selected Row">- Row</button>
       </div>
       <div className="toolbar-group">
+        <button onClick={handleExportPdf} title="Export PDF Report">PDF</button>
+        <button onClick={handleExportXlsx} title="Export Excel">XLSX</button>
         <button onClick={handleExportCsv} title="Export CSV">CSV</button>
       </div>
       <div className="toolbar-info">
