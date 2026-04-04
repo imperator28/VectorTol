@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { useProjectStore } from '../../store/projectStore';
 import type { TargetType, TargetScenario } from '../../types/project';
 
@@ -34,6 +34,11 @@ export function TargetPanel() {
   const target = useProjectStore((s) => s.target);
   const setTarget = useProjectStore((s) => s.setTarget);
 
+  // Raw string for the flush ± input while the user is actively typing.
+  // This allows intermediate values like "0." or "0.0" without the store
+  // round-tripping through parseFloat and discarding the trailing characters.
+  const [flushRaw, setFlushRaw] = useState<string | null>(null);
+
   const handleTypeChange = useCallback(
     (e: React.ChangeEvent<HTMLSelectElement>) => {
       const type = e.target.value as TargetType;
@@ -45,6 +50,7 @@ export function TargetPanel() {
         recess: { minGap: null, maxGap: '-0.10' },
         custom: { minGap: '-0.10', maxGap: '0.10' },
       };
+      setFlushRaw(null);
       setTarget({ type, ...defaults[type] } as TargetScenario);
     },
     [setTarget],
@@ -68,6 +74,9 @@ export function TargetPanel() {
   const handleFlushTolChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const raw = e.target.value;
+      // Keep the raw string in local state so intermediate values like "0."
+      // or "0.05" are not lost when the store round-trips through parseFloat.
+      setFlushRaw(raw);
       const val = parseFloat(raw);
       if (raw === '' || isNaN(val)) {
         setTarget({ ...target, minGap: null, maxGap: null });
@@ -78,6 +87,11 @@ export function TargetPanel() {
     },
     [target, setTarget],
   );
+
+  const handleFlushTolBlur = useCallback(() => {
+    // Discard the local raw string — the stored maxGap is now the source of truth.
+    setFlushRaw(null);
+  }, []);
 
   const field = TARGET_FIELDS[target.type];
 
@@ -128,8 +142,9 @@ export function TargetPanel() {
             Flush ± Tol:
             <input
               type="text"
-              value={getFlushTol(target)}
+              value={flushRaw !== null ? flushRaw : getFlushTol(target)}
               onChange={handleFlushTolChange}
+              onBlur={handleFlushTolBlur}
               placeholder="e.g. 0.05"
             />
             <span className="target-hint">Acceptable range: 0 ± this value</span>
