@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "Vite Dev Server",
+      "runtimeExecutable": "/Users/jiyu/.nvm/versions/node/v24.11.1/bin/node",
+      "runtimeArgs": ["node_modules/.bin/vite"],
+      "port": 1420
+    },
+    {
+      "name": "Vite Preview",
+      "runtimeExecutable": "/Users/jiyu/.nvm/versions/node/v24.11.1/bin/node",
+      "runtimeArgs": ["node_modules/.bin/vite", "preview"],
+      "port": 4173
+    }
+  ]
+}
