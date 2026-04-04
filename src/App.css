@@ -173,47 +173,76 @@
   font-style: italic;
 }
 
+/* Results pane */
+.results-pane {
+  flex-shrink: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: #ffffff;
+}
+
+.results-divider {
+  border-top: 1px solid #c0c0c0;
+}
+
 /* Results Footer */
 .results-footer {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 10px 16px;
-  background: #ffffff;
-  border-top: 2px solid #e0e0e0;
-  min-height: 80px;
-  max-height: 360px;
-  overflow-y: auto;
+  gap: 6px;
+  padding: 8px 12px;
+  height: 100%;
+  box-sizing: border-box;
 }
 
-.results-row {
+/* Cards row */
+.results-cards {
   display: flex;
-  align-items: flex-start;
-  gap: 24px;
-}
-
-.results-plots {
-  display: flex;
-  gap: 16px;
+  gap: 12px;
   flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+.result-card {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 6px 10px;
+  border: 1px solid #e8e8e8;
+  border-radius: 6px;
+  background: #fafafa;
+  min-width: 100px;
+}
+
+.result-card h4 {
+  font-size: 10px;
+  text-transform: uppercase;
+  color: #888;
+  letter-spacing: 0.5px;
+  margin: 0;
+}
+
+.result-value-lg {
+  font-size: 16px;
+}
+
+/* Plots row — side by side */
+.results-plots-row {
+  display: flex;
+  gap: 8px;
+  flex: 1;
+  min-height: 0;
+}
+
+.results-plot-col {
+  flex: 1;
+  min-width: 0;
 }
 
 .results-empty {
   color: #999;
   font-style: italic;
-}
-
-.results-section {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.results-section h4 {
-  font-size: 11px;
-  text-transform: uppercase;
-  color: #888;
-  letter-spacing: 0.5px;
+  padding: 20px;
 }
 
 .results-table {
@@ -251,11 +280,11 @@
 
 /* Distribution Plot */
 .distribution-plot {
-  flex-shrink: 0;
+  width: 100%;
 }
 
 .distribution-title {
-  font-size: 11px;
+  font-size: 10px;
   text-transform: uppercase;
   color: #888;
   letter-spacing: 0.5px;
@@ -264,50 +293,36 @@
 
 .distribution-plot svg {
   display: block;
+  width: 100%;
 }
 
-/* Monte Carlo Panel */
-.mc-panel {
-  flex-shrink: 0;
-}
-
-.mc-title {
-  font-size: 11px;
-  text-transform: uppercase;
-  color: #888;
-  letter-spacing: 0.5px;
-  margin-bottom: 6px;
+/* Monte Carlo */
+.mc-card {
+  min-width: 120px;
 }
 
 .mc-controls {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 6px;
-}
-
-.mc-iter-label {
-  font-size: 11px;
-  color: #555;
-  display: flex;
-  align-items: center;
   gap: 4px;
+  margin-bottom: 2px;
 }
 
 .mc-iter-select {
   padding: 2px 4px;
   border: 1px solid #ccc;
   border-radius: 3px;
-  font-size: 11px;
+  font-size: 10px;
+  width: 56px;
 }
 
 .mc-run-btn {
-  padding: 3px 10px;
+  padding: 2px 8px;
   border: 1px solid #007AFF;
   border-radius: 4px;
   background: #007AFF;
   color: #fff;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.15s;
@@ -323,24 +338,27 @@
 }
 
 .mc-elapsed {
-  font-size: 10px;
+  font-size: 9px;
   color: #999;
 }
 
-.mc-stats {
-  margin-bottom: 4px;
+.mc-plot-wrap {
+  width: 100%;
 }
 
-.mc-stats-table {
-  font-size: 11px;
-}
-
-.mc-stats-table td {
-  padding: 1px 6px 1px 0;
-}
-
-.mc-panel svg {
+.mc-plot-wrap svg {
   display: block;
+  width: 100%;
+}
+
+.mc-plot-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  color: #bbb;
+  font-size: 12px;
+  font-style: italic;
 }
 
 /* Canvas Toolbar */

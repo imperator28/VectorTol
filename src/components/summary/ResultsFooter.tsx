@@ -1,7 +1,7 @@
 import { useProjectStore } from '../../store/projectStore';
 import type { Decimal } from '../../engine/decimal';
 import { DistributionPlot } from './DistributionPlot';
-import { MonteCarloPanel } from './MonteCarloPanel';
+import { MonteCarloPanel, McProvider } from './MonteCarloPanel';
 
 function fmt(val: Decimal, dp: number = 4): string {
   return val.toDecimalPlaces(dp).toString();
@@ -27,15 +27,16 @@ export function ResultsFooter() {
   }
 
   return (
+    <McProvider>
     <div className="results-footer">
-      {/* Top row: numerical results */}
-      <div className="results-row">
-        <div className="results-section">
+      {/* Cards row */}
+      <div className="results-cards">
+        <div className="result-card">
           <h4>Gap (Target)</h4>
-          <span className="result-value">{fmt(results.gap)}</span>
+          <span className="result-value result-value-lg">{fmt(results.gap)}</span>
         </div>
 
-        <div className="results-section">
+        <div className="result-card">
           <h4>Worst Case</h4>
           <table className="results-table">
             <tbody>
@@ -49,7 +50,7 @@ export function ResultsFooter() {
           </span>
         </div>
 
-        <div className="results-section">
+        <div className="result-card">
           <h4>RSS</h4>
           <table className="results-table">
             <tbody>
@@ -63,7 +64,7 @@ export function ResultsFooter() {
           </span>
         </div>
 
-        <div className="results-section">
+        <div className="result-card">
           <h4>RSS F/R</h4>
           <table className="results-table">
             <tbody>
@@ -72,13 +73,20 @@ export function ResultsFooter() {
             </tbody>
           </table>
         </div>
+
+        <MonteCarloPanel mode="card" />
       </div>
 
-      {/* Bottom row: plots */}
-      <div className="results-plots">
-        <DistributionPlot />
-        <MonteCarloPanel />
+      {/* Plots row — side by side, aligned */}
+      <div className="results-plots-row">
+        <div className="results-plot-col">
+          <DistributionPlot />
+        </div>
+        <div className="results-plot-col">
+          <MonteCarloPanel mode="plot" />
+        </div>
       </div>
     </div>
+    </McProvider>
   );
 }

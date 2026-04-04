@@ -11,24 +11,31 @@ const MIN_CANVAS_PCT = 15;
 const MAX_CANVAS_PCT = 85;
 const DEFAULT_CANVAS_PCT = 45;
 
+const MIN_RESULTS_PX = 60;
+const MAX_RESULTS_PX = 500;
+const DEFAULT_RESULTS_PX = 260;
+
 export function App() {
   const [canvasPct, setCanvasPct] = useState(DEFAULT_CANVAS_PCT);
+  const [resultsPx, setResultsPx] = useState(DEFAULT_RESULTS_PX);
   const workAreaRef = useRef<HTMLDivElement>(null);
-  const dragging = useRef(false);
+  const draggingCanvas = useRef(false);
+  const draggingResults = useRef(false);
 
-  const startResize = useCallback((e: React.MouseEvent) => {
+  // Canvas / grid divider
+  const startCanvasResize = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
-    dragging.current = true;
+    draggingCanvas.current = true;
 
     function onMove(ev: MouseEvent) {
-      if (!dragging.current || !workAreaRef.current) return;
+      if (!draggingCanvas.current || !workAreaRef.current) return;
       const rect = workAreaRef.current.getBoundingClientRect();
       const pct = ((ev.clientY - rect.top) / rect.height) * 100;
       setCanvasPct(Math.max(MIN_CANVAS_PCT, Math.min(MAX_CANVAS_PCT, pct)));
     }
 
     function onUp() {
-      dragging.current = false;
+      draggingCanvas.current = false;
       window.removeEventListener('mousemove', onMove);
       window.removeEventListener('mouseup', onUp);
     }
@@ -36,6 +43,29 @@ export function App() {
     window.addEventListener('mousemove', onMove);
     window.addEventListener('mouseup', onUp);
   }, []);
+
+  // Results pane divider (drag up/down to resize height)
+  const startResultsResize = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    draggingResults.current = true;
+    const startY = e.clientY;
+    const startH = resultsPx;
+
+    function onMove(ev: MouseEvent) {
+      if (!draggingResults.current) return;
+      const delta = startY - ev.clientY; // dragging up = bigger
+      setResultsPx(Math.max(MIN_RESULTS_PX, Math.min(MAX_RESULTS_PX, startH + delta)));
+    }
+
+    function onUp() {
+      draggingResults.current = false;
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+    }
+
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+  }, [resultsPx]);
 
   return (
     <div className="app">
@@ -51,15 +81,22 @@ export function App() {
           </div>
           <div
             className="pane-divider"
-            onMouseDown={startResize}
+            onMouseDown={startCanvasResize}
             title="Drag to resize"
           />
           <div className="grid-pane">
             <StackGrid />
           </div>
+          <div
+            className="pane-divider results-divider"
+            onMouseDown={startResultsResize}
+            title="Drag to resize results"
+          />
+          <div className="results-pane" style={{ height: resultsPx }}>
+            <ResultsFooter />
+          </div>
         </div>
       </div>
-      <ResultsFooter />
     </div>
   );
 }

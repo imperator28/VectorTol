@@ -10,7 +10,7 @@ function normalPdf(x: number, mu: number, sigma: number): number {
 }
 
 // ── SVG Layout Constants ────────────────────────────────────────────────────
-const W = 460;
+const W = 460;  // viewBox width — actual element scales via width="100%"
 const H = 200;
 const PAD_L = 48;
 const PAD_R = 16;
@@ -226,7 +226,7 @@ export function DistributionPlot() {
   if (!plotData) {
     return (
       <div className="distribution-plot">
-        <svg width={W} height={H}>
+        <svg width="100%" height={H} viewBox={`0 0 ${W} ${H}`}>
           <text x={W / 2} y={H / 2} textAnchor="middle" fill="#999" fontSize={12}>
             Add dimensions to see distribution
           </text>
@@ -258,7 +258,7 @@ export function DistributionPlot() {
   return (
     <div className="distribution-plot">
       <h4 className="distribution-title">RSS Distribution</h4>
-      <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`}>
+      <svg width="100%" height={H} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid meet">
         {/* Grid lines */}
         {ticks.map((t, i) => (
           <line
