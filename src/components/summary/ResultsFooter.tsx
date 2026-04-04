@@ -5,6 +5,13 @@ function fmt(val: Decimal, dp: number = 4): string {
   return val.toDecimalPlaces(dp).toString();
 }
 
+function formatPct(rate: number): string {
+  if (rate === 0) return '0 ppm';
+  if (rate < 0.000001) return `${(rate * 1e6).toFixed(2)} ppm`;
+  if (rate < 0.01) return `${(rate * 100).toFixed(4)}%`;
+  return `${(rate * 100).toFixed(2)}%`;
+}
+
 export function ResultsFooter() {
   const results = useProjectStore((s) => s.results);
   const rows = useProjectStore((s) => s.rows);
@@ -68,6 +75,22 @@ export function ResultsFooter() {
         <span className={`pass-badge ${results.rssPass ? 'pass' : 'fail'}`}>
           {results.rssPass ? 'PASS' : 'FAIL'}
         </span>
+      </div>
+
+      <div className="results-section">
+        <h4>RSS F/R</h4>
+        <table className="results-table">
+          <tbody>
+            <tr>
+              <td>Failure Rate:</td>
+              <td className="result-value">{formatPct(results.rssFailureRate)}</td>
+            </tr>
+            <tr>
+              <td>Yield:</td>
+              <td className="result-value">{results.rssYieldPercent.toFixed(4)}%</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
   );

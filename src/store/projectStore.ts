@@ -4,7 +4,7 @@ import type { StackRow, RowId } from '../types/grid';
 import { createEmptyRow } from '../types/grid';
 import type { VtolMetadata, TargetScenario } from '../types/project';
 import { wcGap, wcTolerance, wcMin, wcMax } from '../engine/worstCase';
-import { rssTolerance, rssMin, rssMax } from '../engine/rss';
+import { rssTolerance, rssMin, rssMax, rssFailureRate } from '../engine/rss';
 import { centeredNominal, centeredTolerance, percentContribution } from '../engine/calculations';
 import { D, Decimal } from '../engine/decimal';
 
@@ -24,6 +24,8 @@ export interface AnalysisResults {
   rssMax: Decimal;
   wcPass: boolean;
   rssPass: boolean;
+  rssFailureRate: number;
+  rssYieldPercent: number;
 }
 
 function evaluatePass(min: Decimal, max: Decimal, target: TargetScenario): boolean {
@@ -53,6 +55,8 @@ function computeResults(rows: StackRow[], target: TargetScenario): AnalysisResul
   const rssMinVal = rssMin(rows);
   const rssMaxVal = rssMax(rows);
 
+  const { failureRate, yieldPercent } = rssFailureRate(rows, target);
+
   return {
     gap,
     wcTolerance: wcTol,
@@ -63,6 +67,8 @@ function computeResults(rows: StackRow[], target: TargetScenario): AnalysisResul
     rssMax: rssMaxVal,
     wcPass: evaluatePass(wcMinVal, wcMaxVal, target),
     rssPass: evaluatePass(rssMinVal, rssMaxVal, target),
+    rssFailureRate: failureRate,
+    rssYieldPercent: yieldPercent,
   };
 }
 
