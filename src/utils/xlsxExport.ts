@@ -1,10 +1,11 @@
 import * as XLSX from 'xlsx';
 import type { StackRow, RowId } from '../types/grid';
-import type { DerivedRowData } from '../store/projectStore';
+import type { DerivedRowData, AnalysisResults } from '../store/projectStore';
 
 export function exportXlsx(
   rows: StackRow[],
   derivedRows: Map<RowId, DerivedRowData>,
+  results: AnalysisResults,
   projectName: string,
 ): void {
   const headers = [
@@ -33,9 +34,41 @@ export function exportXlsx(
     ];
   });
 
-  const ws = XLSX.utils.aoa_to_sheet([headers, ...data]);
+  const resultsHeaders = ['', 'Tolerance', 'Min Gap', 'Max Gap', 'Status'];
+  const frStr = results.rssFailureRate === 0
+    ? '0 ppm'
+    : results.rssFailureRate < 0.000001
+      ? `${(results.rssFailureRate * 1e6).toFixed(2)} ppm`
+      : `${(results.rssFailureRate * 100).toFixed(4)}%`;
 
-  // Column widths
+  const resultsRows = [
+    [
+      'Worst Case',
+      results.wcTolerance.toDecimalPlaces(4).toString(),
+      results.wcMin.toDecimalPlaces(4).toString(),
+      results.wcMax.toDecimalPlaces(4).toString(),
+      results.wcPass ? 'PASS' : 'FAIL',
+    ],
+    [
+      'RSS',
+      results.rssTolerance.toDecimalPlaces(4).toString(),
+      results.rssMin.toDecimalPlaces(4).toString(),
+      results.rssMax.toDecimalPlaces(4).toString(),
+      results.rssPass ? 'PASS' : 'FAIL',
+    ],
+    ['Gap (nominal)', results.gap.toDecimalPlaces(4).toString(), '', '', ''],
+    ['RSS Failure Rate', frStr, '', '', ''],
+    ['RSS Yield', `${results.rssYieldPercent.toFixed(4)}%`, '', '', ''],
+  ];
+
+  const ws = XLSX.utils.aoa_to_sheet([
+    headers,
+    ...data,
+    [],                 // blank separator row
+    resultsHeaders,
+    ...resultsRows,
+  ]);
+
   ws['!cols'] = [
     { wch: 4 }, { wch: 18 }, { wch: 10 }, { wch: 12 }, { wch: 6 },
     { wch: 10 }, { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 6 }, { wch: 6 },

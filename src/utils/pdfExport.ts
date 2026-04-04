@@ -18,14 +18,14 @@ function fmtDate(iso: string): string {
   });
 }
 
-export function exportPdf(
+export async function exportPdf(
   metadata: VtolMetadata,
   rows: StackRow[],
   target: TargetScenario,
   results: AnalysisResults,
   derivedRows: Map<RowId, DerivedRowData>,
   canvasDataUrl: string | null,
-): void {
+): Promise<void> {
   const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
   const W = doc.internal.pageSize.getWidth();
   const margin = 14;
@@ -55,16 +55,19 @@ export function exportPdf(
   if (canvasDataUrl) {
     const maxH = 60;
     const maxW = W - margin * 2;
-    // Determine aspect ratio from the data URL dimensions
-    const img = new Image();
-    img.src = canvasDataUrl;
-    const aspectW = img.naturalWidth || 800;
-    const aspectH = img.naturalHeight || 400;
-    const ratio = aspectW / aspectH;
-    const imgW = Math.min(maxW, maxH * ratio);
-    const imgH = imgW / ratio;
-    doc.addImage(canvasDataUrl, 'PNG', margin, y, imgW, imgH);
-    y += imgH + 5;
+    await new Promise<void>((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        const ratio = img.naturalWidth / img.naturalHeight;
+        const imgW = Math.min(maxW, maxH * ratio);
+        const imgH = imgW / ratio;
+        doc.addImage(canvasDataUrl, 'PNG', margin, y, imgW, imgH);
+        y += imgH + 5;
+        resolve();
+      };
+      img.onerror = () => resolve(); // skip image if load fails
+      img.src = canvasDataUrl;
+    });
   }
 
   // ── Data table ───────────────────────────────────────────────────────────

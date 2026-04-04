@@ -80,14 +80,14 @@ export function Toolbar() {
     if (selectedRowId) removeRow(selectedRowId);
   }, [selectedRowId, removeRow]);
 
-  const handleExportPdf = useCallback(() => {
+  const handleExportPdf = useCallback(async () => {
     const canvasDataUrl = getStageDataUrl();
-    exportPdf(metadata, rows, target, results, derivedRows, canvasDataUrl);
+    await exportPdf(metadata, rows, target, results, derivedRows, canvasDataUrl);
   }, [metadata, rows, target, results, derivedRows]);
 
   const handleExportXlsx = useCallback(() => {
-    exportXlsx(rows, derivedRows, metadata.projectName);
-  }, [rows, derivedRows, metadata.projectName]);
+    exportXlsx(rows, derivedRows, results, metadata.projectName);
+  }, [rows, derivedRows, results, metadata.projectName]);
 
   return (
     <div className="toolbar">
