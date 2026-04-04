@@ -48,10 +48,38 @@
   background: #e8e8e8;
 }
 
-.toolbar-info {
+.toolbar-meta {
   margin-left: auto;
-  color: #666;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.toolbar-meta-input {
+  padding: 3px 7px;
+  border: 1px solid #ddd;
+  border-radius: 3px;
   font-size: 12px;
+  background: #fafafa;
+  width: 130px;
+  color: #333;
+}
+
+.toolbar-meta-input:focus {
+  outline: none;
+  border-color: #007AFF;
+  background: #fff;
+}
+
+.toolbar-meta-author {
+  width: 100px;
+  color: #666;
+}
+
+.toolbar-dirty {
+  font-size: 11px;
+  color: #e65100;
+  font-style: italic;
 }
 
 /* Main content */
