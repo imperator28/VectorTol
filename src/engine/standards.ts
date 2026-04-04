@@ -234,6 +234,13 @@ export interface RowChange {
   /** One-directional shift: nominal mid-point moves by this amount */
   nominalShift: number;
   note: string;
+  /**
+   * For asymmetric-shift rows only: the exact +/− tolerance values to apply.
+   * When present, apply as asymmetric (tolSymmetric → null, tolPlus/tolMinus set explicitly).
+   * When absent, apply as symmetric (tolSymmetric = toTol).
+   */
+  applyTolPlus?: number;
+  applyTolMinus?: number;
 }
 
 /** One proposed allocation strategy */
@@ -664,6 +671,25 @@ export function runSmartAllocation(
         }
       });
 
+      // Enrich asymmetric rows with the explicit tolPlus / tolMinus to apply
+      const rawAsymChanges = buildChanges(proposedTols, notes, nominalShifts, false);
+      const asymRowChanges = rawAsymChanges.map((c) => {
+        if (Math.abs(c.nominalShift) < 0.0001) return c; // unchanged row
+        const r = parsed.find((p) => p.id === c.rowId)!;
+        const t = r.centeredTol;
+        const dir = r.direction;
+        let applyTolPlus: number;
+        let applyTolMinus: number;
+        if (wantHigherGap) {
+          applyTolPlus  = dir === 1 ? 2 * t : 0;
+          applyTolMinus = dir === 1 ? 0      : -2 * t;
+        } else {
+          applyTolPlus  = dir === 1 ? 0      : 2 * t;
+          applyTolMinus = dir === 1 ? -2 * t : 0;
+        }
+        return { ...c, applyTolPlus, applyTolMinus };
+      });
+
       strategies.push({
         id: 'asymmetric-shift',
         label: 'One-Directional Tolerance (Nominal Shift)',
@@ -682,7 +708,7 @@ export function runSmartAllocation(
         newNomGap,
         wcPassAfter: checkPass(newNomGap, newWc, target),
         rssPassAfter: checkPass(newNomGap, newRss, target),
-        rowChanges: buildChanges(proposedTols, notes, nominalShifts, false),
+        rowChanges: asymRowChanges,
       });
     }
   }

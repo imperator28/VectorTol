@@ -1,8 +1,9 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 import { useProjectStore } from '../../store/projectStore';
 import { useSettingsStore } from '../../store/settingsStore';
 import { runSmartAllocation } from '../../engine/standards';
-import type { AllocationStrategy, SmartAllocationResult } from '../../engine/standards';
+import type { AllocationStrategy, RowChange, SmartAllocationResult } from '../../engine/standards';
+import type { StackRow } from '../../types/grid';
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
@@ -18,12 +19,35 @@ function PassBadge({ pass, label }: { pass: boolean; label: string }) {
   );
 }
 
+/** Compute the store update for a single RowChange */
+function changeToUpdate(change: RowChange): Partial<StackRow> {
+  if (change.applyTolPlus !== undefined && change.applyTolMinus !== undefined) {
+    // Asymmetric: store as explicit +/− tolerances; clear symmetric
+    return {
+      tolSymmetric: null,
+      tolPlus: String(change.applyTolPlus),
+      tolMinus: String(change.applyTolMinus),
+    };
+  }
+  // Symmetric
+  const t = change.toTol;
+  return {
+    tolSymmetric: String(t),
+    tolPlus: String(t),
+    tolMinus: String(-t),
+  };
+}
+
 // ── strategy card ─────────────────────────────────────────────────────────────
 
 function StrategyCard({
   strategy,
+  onApplyRow,
+  onApplyAll,
 }: {
   strategy: AllocationStrategy;
+  onApplyRow: (change: RowChange) => void;
+  onApplyAll: (strategy: AllocationStrategy) => void;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -61,9 +85,7 @@ function StrategyCard({
       <div className="gs-strategy-summary">
         {strategy.feasible ? (
           <>
-            <span className="gs-strategy-wc">
-              WC: {fmt(strategy.newWcTol)}
-            </span>
+            <span className="gs-strategy-wc">WC: {fmt(strategy.newWcTol)}</span>
             <PassBadge pass={strategy.wcPassAfter} label="WC" />
             <PassBadge pass={strategy.rssPassAfter} label="RSS" />
           </>
@@ -80,46 +102,72 @@ function StrategyCard({
           <p className="gs-strategy-desc">{strategy.description}</p>
 
           {strategy.rowChanges.length > 0 ? (
-            <table className="gs-change-table">
-              <thead>
-                <tr>
-                  <th>Part</th>
-                  <th>From</th>
-                  <th>To</th>
-                </tr>
-              </thead>
-              <tbody>
-                {strategy.rowChanges.map((c) => (
-                  <tr key={c.rowId}>
-                    <td
-                      className="gs-part-name"
-                      title={`${c.component} ${c.dimId}`}
-                    >
-                      {c.component || c.dimId || '—'}
-                    </td>
-                    <td className="gs-num">
-                      {fmt(c.fromTol)}
-                      {c.fromITGrade && (
-                        <span className="gs-grade">{c.fromITGrade}</span>
-                      )}
-                    </td>
-                    <td className={`gs-num ${c.isLoosen ? 'gs-loosen' : 'gs-tighten'}`}>
-                      {/* If this is an asymmetric shift the tolerance doesn't change */}
-                      {Math.abs(c.nominalShift) > 0.0001 ? (
-                        <span title={c.note}>{c.note}</span>
-                      ) : (
-                        <>
-                          {fmt(c.toTol)}
-                          {c.toITGrade && (
-                            <span className="gs-grade">{c.toITGrade}</span>
-                          )}
-                        </>
-                      )}
-                    </td>
+            <>
+              <table className="gs-change-table">
+                <thead>
+                  <tr>
+                    <th>Part</th>
+                    <th>From</th>
+                    <th>To</th>
+                    <th></th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {strategy.rowChanges.map((c) => (
+                    <tr key={c.rowId}>
+                      <td
+                        className="gs-part-name"
+                        title={`${c.component} ${c.dimId}`}
+                      >
+                        {c.component || c.dimId || '—'}
+                      </td>
+                      <td className="gs-num">
+                        {fmt(c.fromTol)}
+                        {c.fromITGrade && (
+                          <span className="gs-grade">{c.fromITGrade}</span>
+                        )}
+                      </td>
+                      <td className={`gs-num ${c.isLoosen ? 'gs-loosen' : 'gs-tighten'}`}>
+                        {Math.abs(c.nominalShift) > 0.0001 ? (
+                          <span className="gs-asym-label" title={c.note}>
+                            {c.applyTolPlus !== undefined
+                              ? `+${c.applyTolPlus.toFixed(4)}/−${Math.abs(c.applyTolMinus ?? 0).toFixed(4)}`
+                              : c.note}
+                          </span>
+                        ) : (
+                          <>
+                            {fmt(c.toTol)}
+                            {c.toITGrade && (
+                              <span className="gs-grade">{c.toITGrade}</span>
+                            )}
+                          </>
+                        )}
+                      </td>
+                      <td className="gs-apply-cell">
+                        <button
+                          className="gs-apply-btn"
+                          onClick={() => onApplyRow(c)}
+                          title="Apply this suggestion to the row"
+                        >
+                          Apply
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              {/* Apply-all button */}
+              <div className="gs-apply-all-row">
+                <button
+                  className="gs-apply-all-btn"
+                  onClick={() => onApplyAll(strategy)}
+                  title="Apply all suggestions in this strategy at once"
+                >
+                  ✓ Apply All ({strategy.rowChanges.length})
+                </button>
+              </div>
+            </>
           ) : (
             <p className="gs-no-changes">No rows require adjustment.</p>
           )}
@@ -132,8 +180,9 @@ function StrategyCard({
 // ── main panel ────────────────────────────────────────────────────────────────
 
 export function GoalSeekPanel() {
-  const rows    = useProjectStore((s) => s.rows);
-  const target  = useProjectStore((s) => s.target);
+  const rows      = useProjectStore((s) => s.rows);
+  const target    = useProjectStore((s) => s.target);
+  const updateRow = useProjectStore((s) => s.updateRow);
   const standards = useSettingsStore((s) => s.config.standards);
 
   const seekInput = useMemo(
@@ -158,6 +207,22 @@ export function GoalSeekPanel() {
     [seekInput, target, standards],
   );
 
+  const handleApplyRow = useCallback(
+    (change: RowChange) => {
+      updateRow(change.rowId, changeToUpdate(change));
+    },
+    [updateRow],
+  );
+
+  const handleApplyAll = useCallback(
+    (strategy: AllocationStrategy) => {
+      for (const change of strategy.rowChanges) {
+        updateRow(change.rowId, changeToUpdate(change));
+      }
+    },
+    [updateRow],
+  );
+
   if (rows.length === 0) return null;
 
   const { wcCurrentlyPasses, rssCurrentlyPasses, wcBudget, nominalGapViolation } = result;
@@ -167,7 +232,7 @@ export function GoalSeekPanel() {
   let bannerMsg = '✓ Design intent met';
   if (nominalGapViolation) {
     bannerClass = 'gs-banner-fail';
-    bannerMsg = '✗ Nominal gap violates design intent — tolerance allocation alone cannot fix this';
+    bannerMsg = '✗ Nominal gap violates design intent — tolerances alone cannot fix this';
   } else if (!wcCurrentlyPasses) {
     bannerClass = 'gs-banner-fail';
     bannerMsg = '✗ WC fails design intent';
@@ -192,9 +257,7 @@ export function GoalSeekPanel() {
         {wcBudget !== null && (
           <span className="gs-bud-item">
             <span className="gs-bud-label">Budget</span>
-            <span
-              className={`gs-bud-val ${wcCurrentlyPasses ? 'gs-bud-ok' : 'gs-bud-over'}`}
-            >
+            <span className={`gs-bud-val ${wcCurrentlyPasses ? 'gs-bud-ok' : 'gs-bud-over'}`}>
               {fmt(wcBudget)}
             </span>
           </span>
@@ -213,21 +276,25 @@ export function GoalSeekPanel() {
       {result.strategies.length > 0 ? (
         <div className="gs-strategies">
           {result.strategies.map((s) => (
-            <StrategyCard key={s.id} strategy={s} />
+            <StrategyCard
+              key={s.id}
+              strategy={s}
+              onApplyRow={handleApplyRow}
+              onApplyAll={handleApplyAll}
+            />
           ))}
         </div>
       ) : wcCurrentlyPasses && rssCurrentlyPasses ? (
         <p className="gs-all-ok">
-          All tolerances are within design intent and at a reasonable IT grade.
-          No adjustments needed.
+          All tolerances within design intent and at a reasonable IT grade.
         </p>
       ) : null}
 
       {/* Nominal gap violation advisory */}
       {nominalGapViolation && (
         <p className="gs-advisory">
-          💡 The nominal gap ({result.nominalGap.toFixed(4)} mm) is already on the wrong side of
-          the design limit. Revise nominal dimensions or the design intent bounds.
+          💡 Nominal gap ({result.nominalGap.toFixed(4)} mm) is on the wrong side of the limit.
+          Revise nominal dimensions or design intent bounds.
         </p>
       )}
     </div>

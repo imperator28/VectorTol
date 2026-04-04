@@ -16,14 +16,20 @@ const MIN_RESULTS_PX = 220;   // enough to show cards + plots
 const MAX_RESULTS_PX = 500;
 const DEFAULT_RESULTS_PX = 280;
 
+const MIN_SIDEBAR_PX = 160;
+const MAX_SIDEBAR_PX = 480;
+const DEFAULT_SIDEBAR_PX = 240;
+
 export function App() {
   const [canvasPct, setCanvasPct] = useState(DEFAULT_CANVAS_PCT);
   const [resultsPx, setResultsPx] = useState(DEFAULT_RESULTS_PX);
+  const [sidebarPx, setSidebarPx] = useState(DEFAULT_SIDEBAR_PX);
   const [canvasCollapsed, setCanvasCollapsed] = useState(false);
   const [resultsCollapsed, setResultsCollapsed] = useState(false);
   const workAreaRef = useRef<HTMLDivElement>(null);
   const draggingCanvas = useRef(false);
   const draggingResults = useRef(false);
+  const draggingSidebar = useRef(false);
 
   // Canvas / grid divider
   const startCanvasResize = useCallback((e: React.MouseEvent) => {
@@ -47,6 +53,29 @@ export function App() {
     window.addEventListener('mousemove', onMove);
     window.addEventListener('mouseup', onUp);
   }, [canvasCollapsed]);
+
+  // Sidebar divider
+  const startSidebarResize = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    draggingSidebar.current = true;
+    const startX = e.clientX;
+    const startW = sidebarPx;
+
+    function onMove(ev: MouseEvent) {
+      if (!draggingSidebar.current) return;
+      const delta = ev.clientX - startX;
+      setSidebarPx(Math.max(MIN_SIDEBAR_PX, Math.min(MAX_SIDEBAR_PX, startW + delta)));
+    }
+
+    function onUp() {
+      draggingSidebar.current = false;
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+    }
+
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+  }, [sidebarPx]);
 
   // Results pane divider
   const startResultsResize = useCallback((e: React.MouseEvent) => {
@@ -76,10 +105,15 @@ export function App() {
     <div className="app">
       <Toolbar />
       <div className="main-content">
-        <div className="sidebar">
+        <div className="sidebar" style={{ width: sidebarPx }}>
           <TargetPanel />
           <GoalSeekPanel />
         </div>
+        <div
+          className="sidebar-divider"
+          onMouseDown={startSidebarResize}
+          title="Drag to resize sidebar"
+        />
         <div className="work-area" ref={workAreaRef}>
           {/* Canvas pane — collapsible */}
           {canvasCollapsed ? (
