@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { AgGridReact } from 'ag-grid-react';
-import type { CellValueChangedEvent, RowSelectedEvent } from 'ag-grid-community';
+import type { CellValueChangedEvent, RowSelectedEvent, RowDragEndEvent } from 'ag-grid-community';
 import { AllCommunityModule, ModuleRegistry } from 'ag-grid-community';
 import { columnDefs } from './columnDefs';
 import { createGridContext } from './cellRenderers';
@@ -14,6 +14,7 @@ export function StackGrid() {
   const rows = useProjectStore((s) => s.rows);
   const derivedRows = useProjectStore((s) => s.derivedRows);
   const updateRow = useProjectStore((s) => s.updateRow);
+  const reorderRows = useProjectStore((s) => s.reorderRows);
   const setSelectedRowId = useUiStore((s) => s.setSelectedRowId);
 
   const context = useMemo(() => createGridContext(derivedRows), [derivedRows]);
@@ -52,6 +53,17 @@ export function StackGrid() {
     [setSelectedRowId],
   );
 
+  const onRowDragEnd = useCallback(
+    (event: RowDragEndEvent<StackRow>) => {
+      const newRows: StackRow[] = [];
+      event.api.forEachNode((node) => {
+        if (node.data) newRows.push(node.data);
+      });
+      reorderRows(newRows);
+    },
+    [reorderRows],
+  );
+
   return (
     <div style={{ flex: 1, width: '100%' }}>
       <AgGridReact<StackRow>
@@ -61,6 +73,8 @@ export function StackGrid() {
         getRowId={(params) => params.data.id}
         onCellValueChanged={onCellValueChanged}
         onRowSelected={onRowSelected}
+        onRowDragEnd={onRowDragEnd}
+        rowDragManaged={true}
         rowSelection="single"
         singleClickEdit={true}
         stopEditingWhenCellsLoseFocus={true}

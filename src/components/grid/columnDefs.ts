@@ -9,6 +9,7 @@ export const columnDefs: ColDef[] = [
     editable: false,
     sortable: false,
     filter: false,
+    rowDrag: true,
   },
   {
     field: 'component',
