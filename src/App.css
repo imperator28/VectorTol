@@ -229,6 +229,24 @@
   color: #991b1b;
 }
 
+/* Distribution Plot */
+.distribution-plot {
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.distribution-title {
+  font-size: 11px;
+  text-transform: uppercase;
+  color: #888;
+  letter-spacing: 0.5px;
+  margin-bottom: 2px;
+}
+
+.distribution-plot svg {
+  display: block;
+}
+
 /* Canvas Toolbar */
 .canvas-toolbar {
   display: flex;

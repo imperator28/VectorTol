@@ -1,5 +1,6 @@
 import { useProjectStore } from '../../store/projectStore';
 import type { Decimal } from '../../engine/decimal';
+import { DistributionPlot } from './DistributionPlot';
 
 function fmt(val: Decimal, dp: number = 4): string {
   return val.toDecimalPlaces(dp).toString();
@@ -92,6 +93,8 @@ export function ResultsFooter() {
           </tbody>
         </table>
       </div>
+
+      <DistributionPlot />
     </div>
   );
 }
