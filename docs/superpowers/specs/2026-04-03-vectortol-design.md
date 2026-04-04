@@ -333,3 +333,4 @@ File I/O uses Tauri's native file dialog (`@tauri-apps/plugin-dialog`) for save/
 - Monte Carlo simulation via Rust backend (Tauri IPC)
 - Histogram visualization of Monte Carlo results
 - Failure rate / yield percentage display
+- **Normal distribution overlay plot:** Render overlapping +TOL and -TOL normal distribution curves on the histogram. Visually highlight the overlap region showing pass (green) vs fail (red) zones against the design intent target. This gives engineers an immediate visual read on yield risk.

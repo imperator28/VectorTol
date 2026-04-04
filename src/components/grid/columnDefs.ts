@@ -49,6 +49,7 @@ export const columnDefs: ColDef[] = [
   {
     field: 'tolSymmetric',
     headerName: '\u00b1 TOL',
+    headerTooltip: 'Symmetric tolerance. Auto-fills +TOL and -TOL. Set to use symmetric mode; clear to use asymmetric.',
     editable: true,
     width: 80,
     type: 'rightAligned',
@@ -56,20 +57,36 @@ export const columnDefs: ColDef[] = [
   {
     field: 'tolPlus',
     headerName: '+TOL',
+    headerTooltip: 'Upper tolerance limit. Auto-filled from \u00b1TOL. Edit to override (switches to asymmetric mode).',
     editable: true,
     width: 75,
     type: 'rightAligned',
+    cellStyle: (params: CellClassParams) => {
+      // Grey when auto-synced from \u00b1TOL, normal when in asymmetric override mode
+      if (params.data?.tolSymmetric !== null && params.data?.tolSymmetric !== '') {
+        return { color: '#999' };
+      }
+      return null;
+    },
   },
   {
     field: 'tolMinus',
     headerName: '-TOL',
+    headerTooltip: 'Lower tolerance limit (negative value). Auto-filled from \u00b1TOL. Edit to override.',
     editable: true,
     width: 75,
     type: 'rightAligned',
+    cellStyle: (params: CellClassParams) => {
+      if (params.data?.tolSymmetric !== null && params.data?.tolSymmetric !== '') {
+        return { color: '#999' };
+      }
+      return null;
+    },
   },
   {
     field: 'rounding',
     headerName: 'Round',
+    headerTooltip: 'Decimal places for display (0\u20136). Does not affect internal calculation precision.',
     editable: true,
     width: 65,
     type: 'rightAligned',
@@ -77,6 +94,7 @@ export const columnDefs: ColDef[] = [
   {
     field: 'sigma',
     headerName: '\u03c3',
+    headerTooltip: 'Process sigma level (default 3). Used for RSS statistical analysis. 3\u03c3 = 99.73% yield, 6\u03c3 = 99.99966% yield.',
     editable: true,
     width: 55,
     type: 'rightAligned',

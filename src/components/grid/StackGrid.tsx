@@ -23,7 +23,22 @@ export function StackGrid() {
       if (!event.data) return;
       const field = event.colDef.field;
       if (!field) return;
-      updateRow(event.data.id, { [field]: event.newValue });
+
+      const updates: Partial<StackRow> = { [field]: event.newValue };
+
+      // Auto-sync: ±TOL -> +TOL/-TOL
+      if (field === 'tolSymmetric' && event.newValue !== null && event.newValue !== '') {
+        const val = event.newValue as string;
+        updates.tolPlus = val;
+        updates.tolMinus = `-${val}`;
+      }
+
+      // Override: +TOL or -TOL edited -> clear ±TOL (switch to asymmetric mode)
+      if (field === 'tolPlus' || field === 'tolMinus') {
+        updates.tolSymmetric = null;
+      }
+
+      updateRow(event.data.id, updates);
     },
     [updateRow],
   );
@@ -52,6 +67,7 @@ export function StackGrid() {
         enableCellTextSelection={true}
         suppressClipboardPaste={false}
         domLayout="normal"
+        tooltipShowDelay={300}
       />
     </div>
   );
