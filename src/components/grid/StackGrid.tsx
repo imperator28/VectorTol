@@ -6,6 +6,7 @@ import { columnDefs } from './columnDefs';
 import { createGridContext } from './cellRenderers';
 import { useProjectStore } from '../../store/projectStore';
 import { useUiStore } from '../../store/uiStore';
+import { useSettingsStore } from '../../store/settingsStore';
 import type { StackRow } from '../../types/grid';
 
 ModuleRegistry.registerModules([AllCommunityModule]);
@@ -16,8 +17,12 @@ export function StackGrid() {
   const updateRow = useProjectStore((s) => s.updateRow);
   const reorderRows = useProjectStore((s) => s.reorderRows);
   const setSelectedRowId = useUiStore((s) => s.setSelectedRowId);
+  const standards = useSettingsStore((s) => s.config.standards);
 
-  const context = useMemo(() => createGridContext(derivedRows), [derivedRows]);
+  const context = useMemo(
+    () => createGridContext(derivedRows, standards),
+    [derivedRows, standards],
+  );
 
   const onCellValueChanged = useCallback(
     (event: CellValueChangedEvent<StackRow>) => {

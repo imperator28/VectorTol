@@ -1,6 +1,7 @@
 import { useRef, useState, useCallback } from 'react';
 import { StackGrid } from './components/grid/StackGrid';
 import { TargetPanel } from './components/targets/TargetPanel';
+import { GoalSeekPanel } from './components/targets/GoalSeekPanel';
 import { ResultsFooter } from './components/summary/ResultsFooter';
 import { Toolbar } from './components/toolbar/Toolbar';
 import { VisualCanvas } from './components/canvas/VisualCanvas';
@@ -77,6 +78,7 @@ export function App() {
       <div className="main-content">
         <div className="sidebar">
           <TargetPanel />
+          <GoalSeekPanel />
         </div>
         <div className="work-area" ref={workAreaRef}>
           {/* Canvas pane — collapsible */}

@@ -50,10 +50,22 @@ export const columnDefs: ColDef[] = [
   {
     field: 'tolSymmetric',
     headerName: '\u00b1 TOL',
-    headerTooltip: 'Symmetric tolerance. Auto-fills +TOL and -TOL. Set to use symmetric mode; clear to use asymmetric.',
+    headerTooltip: 'Symmetric tolerance. Auto-fills +TOL and -TOL. Hover a cell to see ISO 286 suggestion for the row\'s process.',
     editable: true,
     width: 80,
     type: 'rightAligned',
+    tooltipValueGetter: (params) => {
+      if (!params.data || !params.context?.getSuggestionText) return '';
+      return params.context.getSuggestionText(params.data) || '';
+    },
+    cellStyle: (params: CellClassParams) => {
+      if (!params.data) return null;
+      const tight = params.context?.isTooTight?.(params.data) ?? false;
+      if (tight) {
+        return { color: '#dc2626', fontWeight: 'bold', border: '1px solid #fca5a5' };
+      }
+      return null;
+    },
   },
   {
     field: 'tolPlus',
