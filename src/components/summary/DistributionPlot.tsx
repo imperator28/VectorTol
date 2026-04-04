@@ -66,7 +66,14 @@ function getFailureRegions(
       regions.push({ side: 'right', value: hi ?? 0 });
       break;
     case 'flush':
-      // No explicit failure bounds
+      // Flush with tolerance: fail if x < minGap OR x > maxGap
+      if (lo !== null) regions.push({ side: 'left', value: lo });
+      if (hi !== null) regions.push({ side: 'right', value: hi });
+      break;
+    case 'custom':
+      // Custom: fail if x < minGap OR x > maxGap
+      if (lo !== null) regions.push({ side: 'left', value: lo });
+      if (hi !== null) regions.push({ side: 'right', value: hi });
       break;
   }
   return regions;

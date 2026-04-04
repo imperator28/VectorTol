@@ -48,11 +48,15 @@ function evaluatePass(min: Decimal, max: Decimal, target: TargetScenario): boole
     case 'interference':
       return (lo === null || max.lte(lo)) && (hi === null || min.gte(hi));
     case 'flush':
-      return min.lte(0) && max.gte(0);
+      // Flush with tolerance: gap must stay within [minGap, maxGap] (e.g. [-0.05, +0.05])
+      return (lo === null || min.gte(lo)) && (hi === null || max.lte(hi));
     case 'proud':
       return lo !== null ? min.gte(lo) : min.gt(0);
     case 'recess':
       return hi !== null ? max.lte(hi) : max.lt(0);
+    case 'custom':
+      // Custom: gap must be within [minGap, maxGap]
+      return (lo === null || min.gte(lo)) && (hi === null || max.lte(hi));
   }
 }
 

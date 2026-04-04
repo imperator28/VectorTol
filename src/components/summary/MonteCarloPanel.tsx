@@ -102,6 +102,14 @@ export function MonteCarloPanel() {
       case 'recess':
         bounds.push({ value: hi ?? 0, side: 'right' });
         break;
+      case 'flush':
+        if (lo !== null) bounds.push({ value: lo, side: 'left' });
+        if (hi !== null) bounds.push({ value: hi, side: 'right' });
+        break;
+      case 'custom':
+        if (lo !== null) bounds.push({ value: lo, side: 'left' });
+        if (hi !== null) bounds.push({ value: hi, side: 'right' });
+        break;
     }
 
     // X-axis ticks: mean, ±1σ, ±2σ, ±3σ

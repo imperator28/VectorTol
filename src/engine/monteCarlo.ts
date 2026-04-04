@@ -123,11 +123,15 @@ function createFailCheck(target: TargetScenario): (gap: number) => boolean {
     case 'interference':
       return (gap) => (lo !== null && gap > lo) || (hi !== null && gap < hi);
     case 'flush':
-      return () => false; // no explicit failure for flush
+      // Flush with tolerance: fail if gap < minGap OR gap > maxGap
+      return (gap) => (lo !== null && gap < lo) || (hi !== null && gap > hi);
     case 'proud':
       return (gap) => gap < (lo ?? 0);
     case 'recess':
       return (gap) => gap > (hi ?? 0);
+    case 'custom':
+      // Custom: fail if outside [minGap, maxGap]
+      return (gap) => (lo !== null && gap < lo) || (hi !== null && gap > hi);
     default:
       return () => false;
   }

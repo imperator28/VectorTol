@@ -1,7 +1,7 @@
 import type { StackRow } from './grid';
 import type { CanvasData } from './canvas';
 
-export type TargetType = 'clearance' | 'interference' | 'flush' | 'proud' | 'recess';
+export type TargetType = 'clearance' | 'interference' | 'flush' | 'proud' | 'recess' | 'custom';
 
 export interface TargetScenario {
   type: TargetType;

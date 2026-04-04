@@ -89,8 +89,16 @@ export function rssFailureRate(
       }
       break;
     case 'flush':
-      // Fail if gap deviates significantly from 0 — use ±3σ as implicit bounds
-      // No explicit bounds for flush, so failure rate is based on how far gap is from 0
+      // Flush with tolerance: fail if gap < minGap OR gap > maxGap
+      // e.g. minGap = -0.05, maxGap = +0.05
+      if (lo !== null) {
+        const zLo = (lo - gap) / sigma;
+        failureRate += normalCdf(zLo);
+      }
+      if (hi !== null) {
+        const zHi = (hi - gap) / sigma;
+        failureRate += 1 - normalCdf(zHi);
+      }
       break;
     case 'proud':
       // Fail if gap < minGap (or < 0 if no minGap)
@@ -106,6 +114,17 @@ export function rssFailureRate(
         const bound = hi ?? 0;
         const z = (bound - gap) / sigma;
         failureRate = 1 - normalCdf(z);
+      }
+      break;
+    case 'custom':
+      // Custom: fail if gap < minGap OR gap > maxGap
+      if (lo !== null) {
+        const zLo = (lo - gap) / sigma;
+        failureRate += normalCdf(zLo);
+      }
+      if (hi !== null) {
+        const zHi = (hi - gap) / sigma;
+        failureRate += 1 - normalCdf(zHi);
       }
       break;
   }
