@@ -171,41 +171,99 @@
   background: var(--divider-hover);
 }
 
-/* ── RIGHT — Insights panel (design intent + results + advisors) ────────────── */
+/* ── RIGHT — Insights panel: independently resizable sections ───────────────── */
 .insights-panel {
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow: hidden;
   background: var(--bg-surface);
   border-left: 1px solid var(--border-primary);
   min-width: 300px;
 }
 
-/* Section building blocks */
-.insight-section {
+/* Each section is a flex child with fixed or flexible height */
+.rp-section {
   flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
 }
 
-.insight-section-label {
+/* The last section (Nominal Advisor) fills remaining space */
+.rp-section-flex {
+  flex: 1;
+  min-height: 60px;
+}
+
+/* Design Intent: auto height — not pixel-fixed */
+.rp-section-intent {
+  flex-shrink: 0;
+  height: auto;
+}
+
+/* Label bar for right-panel sections */
+.rp-label-bar {
+  display: flex;
+  align-items: center;
+  height: 26px;
+  padding: 0 12px;
+  background: var(--bg-surface-alt);
+  border-bottom: 1px solid var(--border-primary);
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.rp-label-bar-toggle {
+  /* same styles, just marks it as interactive */
+}
+
+.rp-label-text {
   font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.1em;
   color: var(--text-tertiary);
-  padding: 10px 14px 0;
+  flex: 1;
 }
 
-.insight-section-results {
+/* Scrollable content area inside each section */
+.rp-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 0;
+}
+
+/* Design Intent content: no scroll needed, compact */
+.rp-content-noscroll {
+  overflow: visible;
   flex-shrink: 0;
 }
 
-.insight-sep {
-  height: 1px;
+/* Drag-to-resize dividers between sections */
+.rp-divider {
+  height: 4px;
+  flex-shrink: 0;
+  cursor: row-resize;
   background: var(--border-primary);
-  flex-shrink: 0;
-  margin: 4px 0;
+  transition: background var(--transition-fast);
+}
+
+.rp-divider:hover,
+.rp-divider:active {
+  background: var(--divider-hover);
+}
+
+/* Static separator (no drag) */
+.rp-divider-static {
+  cursor: default;
+  height: 1px;
+}
+
+.rp-divider-static:hover {
+  background: var(--border-primary);
 }
 
 /* ── Adapt results for narrow insights column ──────────────────────────────── */
@@ -223,10 +281,16 @@
   gap: 6px;
 }
 
-/* GoalSeek and NominalAdvisor: suppress their own separation since insight-sep handles it */
+/* Suppress internal panel headings — label bars provide section names */
+.insights-panel .goalseek-panel h3,
+.insights-panel .nominal-advisor-panel h3 {
+  display: none;
+}
+
+/* Remove extra top-margin/padding since label bar is the separator */
 .insights-panel .goalseek-panel {
   margin-top: 0;
-  padding-top: 8px;
+  padding-top: 6px;
   border-top: none;
 }
 
@@ -236,9 +300,9 @@
   border-top: none;
 }
 
-/* Target panel inside insight section */
+/* Target panel inside intent section */
 .insights-panel .target-panel {
-  padding: 6px 14px 10px;
+  padding: 8px 12px 10px;
 }
 
 /* Stack-up label bar variant (no toggle btn) */
@@ -1664,16 +1728,29 @@
   border-left-color: #000;
 }
 
-[data-theme="swiss"] .insight-sep {
-  height: 2px;
-  background: #000;
-  margin: 0;
+[data-theme="swiss"] .rp-label-bar {
+  border-bottom-width: 2px;
+  border-bottom-color: #000;
 }
 
-[data-theme="swiss"] .insight-section-label {
+[data-theme="swiss"] .rp-label-text {
   color: #000;
   font-weight: 900;
   letter-spacing: 0.15em;
+}
+
+[data-theme="swiss"] .rp-divider {
+  background: #000;
+  height: 3px;
+}
+
+[data-theme="swiss"] .rp-divider:hover,
+[data-theme="swiss"] .rp-divider:active {
+  background: #FF3000;
+}
+
+[data-theme="swiss"] .rp-divider-static {
+  height: 2px;
 }
 
 [data-theme="swiss"] .pane-label-bar-grid {
