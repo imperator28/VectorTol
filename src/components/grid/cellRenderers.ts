@@ -6,6 +6,7 @@ import { getSuggestion } from '../../engine/standards';
 export interface GridContext {
   derivedRows: Map<RowId, DerivedRowData>;
   standards: ToleranceStandard[];
+  updateRow: (id: RowId, updates: Partial<StackRow>) => void;
   getCenteredNominal: (data: StackRow) => string;
   getCenteredTolerance: (data: StackRow) => string;
   getPercentContribution: (data: StackRow) => string;
@@ -16,10 +17,12 @@ export interface GridContext {
 export function createGridContext(
   derivedRows: Map<RowId, DerivedRowData>,
   standards: ToleranceStandard[],
+  updateRow: (id: RowId, updates: Partial<StackRow>) => void,
 ): GridContext {
   return {
     derivedRows,
     standards,
+    updateRow,
 
     getCenteredNominal: (data: StackRow) => {
       const derived = derivedRows.get(data.id);

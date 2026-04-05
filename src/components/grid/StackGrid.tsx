@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { AgGridReact } from 'ag-grid-react';
-import type { CellValueChangedEvent, RowSelectedEvent, RowDragEndEvent } from 'ag-grid-community';
+import type { CellValueChangedEvent, CellClickedEvent, RowSelectedEvent, RowDragEndEvent } from 'ag-grid-community';
 import { AllCommunityModule, ModuleRegistry } from 'ag-grid-community';
 import { columnDefs } from './columnDefs';
 import { createGridContext } from './cellRenderers';
@@ -20,8 +20,8 @@ export function StackGrid() {
   const standards = useSettingsStore((s) => s.config.standards);
 
   const context = useMemo(
-    () => createGridContext(derivedRows, standards),
-    [derivedRows, standards],
+    () => createGridContext(derivedRows, standards, updateRow),
+    [derivedRows, standards, updateRow],
   );
 
   const onCellValueChanged = useCallback(
@@ -45,6 +45,15 @@ export function StackGrid() {
       }
 
       updateRow(event.data.id, updates);
+    },
+    [updateRow],
+  );
+
+  const onCellClicked = useCallback(
+    (event: CellClickedEvent<StackRow>) => {
+      if (event.colDef.field === 'direction' && event.data) {
+        updateRow(event.data.id, { direction: event.data.direction === 1 ? -1 : 1 });
+      }
     },
     [updateRow],
   );
@@ -77,6 +86,7 @@ export function StackGrid() {
         context={context}
         getRowId={(params) => params.data.id}
         onCellValueChanged={onCellValueChanged}
+        onCellClicked={onCellClicked}
         onRowSelected={onRowSelected}
         onRowDragEnd={onRowDragEnd}
         rowDragManaged={true}
