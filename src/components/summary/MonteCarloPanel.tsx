@@ -1,6 +1,11 @@
 import { useState, useCallback, useMemo, useRef, createContext, useContext } from 'react';
 import { useProjectStore } from '../../store/projectStore';
+import { useThemeStore } from '../../store/themeStore';
 import { runMonteCarlo, type MonteCarloResult, type MonteCarloConfig } from '../../engine/monteCarlo';
+
+function css(prop: string): string {
+  return getComputedStyle(document.documentElement).getPropertyValue(prop).trim();
+}
 
 // ── Shared state via context so card + plot stay in sync ────────────────────
 interface McState {
@@ -61,12 +66,7 @@ const PAD_R = 16;
 const PAD_T = 18;
 const PAD_B = 38;
 
-const HIST_FILL = 'rgba(0, 122, 255, 0.25)';
-const HIST_STROKE = 'rgba(0, 122, 255, 0.6)';
-const FAIL_FILL = 'rgba(255, 59, 48, 0.35)';
-const BOUND_STROKE = '#FF9500';
-const MEAN_STROKE = '#007AFF';
-const GRID_STROKE = '#e0e0e0';
+// Colors read from CSS custom properties at render time (theme-aware)
 
 function formatNum(v: number, dp = 4): string {
   if (Math.abs(v) < 0.001 && v !== 0) return v.toExponential(2);
@@ -137,9 +137,23 @@ function McCard() {
 function McPlot() {
   const target = useProjectStore((s) => s.target);
   const { result } = useMc();
+  const themeMode = useThemeStore((s) => s.mode);
 
   const histogramSvg = useMemo(() => {
     if (!result || result.histogram.length === 0) return null;
+
+    const HIST_FILL = css('--plot-pass-fill');
+    const HIST_STROKE = css('--plot-pass-stroke');
+    const FAIL_FILL = css('--plot-fail-fill');
+    const FAIL_STROKE = css('--plot-fail-stroke');
+    const BOUND_STROKE = css('--plot-boundary');
+    const MEAN_STROKE = css('--plot-mean');
+    const GRID_STROKE = css('--plot-grid');
+    const AXIS_COLOR = css('--plot-axis');
+    const TEXT_COLOR = css('--plot-text');
+    const TEXT_TERTIARY = css('--text-tertiary');
+    const YIELD_COLOR = css('--plot-yield');
+    const FAIL_LABEL = css('--plot-fail-label');
 
     const bins = result.histogram;
     const xMin = bins[0]!.lo;
@@ -214,7 +228,7 @@ function McPlot() {
                 width={Math.max(1, sxl(bin.hi) - sxl(bin.lo) - 0.5)}
                 height={Math.max(0, sy(0) - sy(bin.density))}
                 fill={isFail ? FAIL_FILL : HIST_FILL}
-                stroke={isFail ? 'rgba(255,59,48,0.5)' : HIST_STROKE} strokeWidth={0.5} />
+                stroke={isFail ? FAIL_STROKE : HIST_STROKE} strokeWidth={0.5} />
             );
           })}
           {mean >= xMin && mean <= xMax && (
@@ -233,35 +247,35 @@ function McPlot() {
             );
           })}
           <line x1={PAD_L} y1={PAD_T + PLOT_H} x2={PAD_L + PLOT_W} y2={PAD_T + PLOT_H}
-            stroke="#333" strokeWidth={1} />
+            stroke={AXIS_COLOR} strokeWidth={1} />
           {ticks.map((t, i) => (
             <g key={`tick${i}`}>
-              <line x1={t.x} y1={PAD_T + PLOT_H} x2={t.x} y2={PAD_T + PLOT_H + 4} stroke="#333" strokeWidth={1} />
-              <text x={t.x} y={PAD_T + PLOT_H + 14} textAnchor="middle" fill="#333" fontSize={8}
+              <line x1={t.x} y1={PAD_T + PLOT_H} x2={t.x} y2={PAD_T + PLOT_H + 4} stroke={AXIS_COLOR} strokeWidth={1} />
+              <text x={t.x} y={PAD_T + PLOT_H + 14} textAnchor="middle" fill={AXIS_COLOR} fontSize={8}
                 fontWeight={t.bold ? 700 : 400}>{t.label}</text>
             </g>
           ))}
           {sigmaLabels.map((sl, i) => (
-            <text key={`sl${i}`} x={sl.x} y={PAD_T + PLOT_H + 24} textAnchor="middle" fill="#666"
+            <text key={`sl${i}`} x={sl.x} y={PAD_T + PLOT_H + 24} textAnchor="middle" fill={TEXT_COLOR}
               fontSize={8} fontStyle={sl.label === 'μ' ? 'normal' : 'italic'}
               fontWeight={sl.label === 'μ' ? 700 : 400}>{sl.label}</text>
           ))}
-          <text x={10} y={PAD_T + PLOT_H / 2} textAnchor="middle" fill="#999" fontSize={9}
+          <text x={10} y={PAD_T + PLOT_H / 2} textAnchor="middle" fill={TEXT_TERTIARY} fontSize={9}
             transform={`rotate(-90 10 ${PAD_T + PLOT_H / 2})`}>Frequency Density</text>
           <rect x={PAD_L + 4} y={PAD_T + 2} width={8} height={8} rx={1}
             fill={HIST_FILL} stroke={HIST_STROKE} strokeWidth={0.5} />
-          <text x={PAD_L + 15} y={PAD_T + 9} fill="#007AFF" fontSize={9} fontWeight={600}>
+          <text x={PAD_L + 15} y={PAD_T + 9} fill={YIELD_COLOR} fontSize={9} fontWeight={600}>
             Yield: {result.yieldPercent.toFixed(4)}%
           </text>
           <rect x={PAD_L + 4} y={PAD_T + 14} width={8} height={8} rx={1}
-            fill={FAIL_FILL} stroke="rgba(255,59,48,0.5)" strokeWidth={0.5} />
-          <text x={PAD_L + 15} y={PAD_T + 21} fill="#c0392b" fontSize={9} fontWeight={600}>
+            fill={FAIL_FILL} stroke={FAIL_STROKE} strokeWidth={0.5} />
+          <text x={PAD_L + 15} y={PAD_T + 21} fill={FAIL_LABEL} fontSize={9} fontWeight={600}>
             F/R: {formatPct(result.failureRate)} ({result.failureCount.toLocaleString()})
           </text>
         </svg>
       );
     };
-  }, [result, target]);
+  }, [result, target, themeMode]);
 
   if (!histogramSvg) {
     return (

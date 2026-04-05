@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useProjectStore } from '../../store/projectStore';
+import { useThemeStore } from '../../store/themeStore';
 
 // ── Normal PDF ──────────────────────────────────────────────────────────────
 const INV_SQRT_2PI = 1 / Math.sqrt(2 * Math.PI);
@@ -20,13 +21,9 @@ const PLOT_W = W - PAD_L - PAD_R;
 const PLOT_H = H - PAD_T - PAD_B;
 const NUM_POINTS = 200;
 
-// Colors
-const PASS_FILL = 'rgba(52, 199, 89, 0.35)';   // green
-const FAIL_FILL = 'rgba(255, 59, 48, 0.35)';    // red
-const CURVE_STROKE = '#1C1C1E';
-const BOUND_STROKE = '#FF9500';
-const MEAN_STROKE = '#007AFF';
-const GRID_STROKE = '#e0e0e0';
+function css(prop: string): string {
+  return getComputedStyle(document.documentElement).getPropertyValue(prop).trim();
+}
 
 interface BoundaryRegion {
   /** 'left' = everything left of x is failure, 'right' = everything right of x is failure */
@@ -91,8 +88,17 @@ export function DistributionPlot() {
   const target = useProjectStore((s) => s.target);
   const rows = useProjectStore((s) => s.rows);
 
+  const themeMode = useThemeStore((s) => s.mode);
+
   const plotData = useMemo(() => {
     if (rows.length === 0) return null;
+
+    const PASS_FILL = css('--plot-pass-fill');
+    const FAIL_FILL = css('--plot-fail-fill');
+    const CURVE_STROKE = css('--plot-curve');
+    const BOUND_STROKE = css('--plot-boundary');
+    const MEAN_STROKE = css('--plot-mean');
+    const GRID_STROKE = css('--plot-grid');
 
     const mu = results.gap.toNumber();
     const rssTol = results.rssTolerance.toNumber();
@@ -220,14 +226,15 @@ export function DistributionPlot() {
       sigmaLabels,
       failureRate: results.rssFailureRate,
       yieldPct: results.rssYieldPercent,
+      colors: { PASS_FILL, FAIL_FILL, CURVE_STROKE, BOUND_STROKE, MEAN_STROKE, GRID_STROKE },
     };
-  }, [results, target, rows]);
+  }, [results, target, rows, themeMode]);
 
   if (!plotData) {
     return (
       <div className="distribution-plot">
         <svg width="100%" height={H} viewBox={`0 0 ${W} ${H}`}>
-          <text x={W / 2} y={H / 2} textAnchor="middle" fill="#999" fontSize={12}>
+          <text x={W / 2} y={H / 2} textAnchor="middle" fill={css('--text-tertiary')} fontSize={12}>
             Add dimensions to see distribution
           </text>
         </svg>
@@ -244,6 +251,7 @@ export function DistributionPlot() {
     sigmaLabels,
     failureRate,
     yieldPct,
+    colors: { PASS_FILL, FAIL_FILL, CURVE_STROKE, BOUND_STROKE, MEAN_STROKE, GRID_STROKE },
   } = plotData;
 
   const frLabel =
@@ -329,7 +337,7 @@ export function DistributionPlot() {
             x={rp.labelX}
             y={PAD_T + PLOT_H - 8}
             textAnchor="middle"
-            fill="#c0392b"
+            fill={css('--plot-fail-label')}
             fontSize={9}
             fontWeight={700}
           >
@@ -343,7 +351,7 @@ export function DistributionPlot() {
           y1={PAD_T + PLOT_H}
           x2={PAD_L + PLOT_W}
           y2={PAD_T + PLOT_H}
-          stroke="#333"
+          stroke={css('--plot-axis')}
           strokeWidth={1}
         />
 
@@ -355,14 +363,14 @@ export function DistributionPlot() {
               y1={PAD_T + PLOT_H}
               x2={t.x}
               y2={PAD_T + PLOT_H + 4}
-              stroke="#333"
+              stroke={css('--plot-axis')}
               strokeWidth={1}
             />
             <text
               x={t.x}
               y={PAD_T + PLOT_H + 14}
               textAnchor="middle"
-              fill="#333"
+              fill={css('--plot-axis')}
               fontSize={8}
               fontWeight={t.bold ? 700 : 400}
             >
@@ -378,7 +386,7 @@ export function DistributionPlot() {
             x={sl.x}
             y={PAD_T + PLOT_H + 24}
             textAnchor="middle"
-            fill="#666"
+            fill={css('--plot-text')}
             fontSize={8}
             fontStyle={sl.label === 'μ' ? 'normal' : 'italic'}
             fontWeight={sl.label === 'μ' ? 700 : 400}
@@ -392,7 +400,7 @@ export function DistributionPlot() {
           x={10}
           y={PAD_T + PLOT_H / 2}
           textAnchor="middle"
-          fill="#999"
+          fill={css('--text-tertiary')}
           fontSize={9}
           transform={`rotate(-90 10 ${PAD_T + PLOT_H / 2})`}
         >
@@ -400,13 +408,13 @@ export function DistributionPlot() {
         </text>
 
         {/* Legend */}
-        <rect x={PAD_L + 4} y={PAD_T + 2} width={8} height={8} rx={1} fill={PASS_FILL} stroke="rgba(52,199,89,0.6)" strokeWidth={0.5} />
-        <text x={PAD_L + 15} y={PAD_T + 9} fill="#27ae60" fontSize={9} fontWeight={600}>
+        <rect x={PAD_L + 4} y={PAD_T + 2} width={8} height={8} rx={1} fill={PASS_FILL} stroke={css('--plot-pass-stroke')} strokeWidth={0.5} />
+        <text x={PAD_L + 15} y={PAD_T + 9} fill={css('--plot-yield')} fontSize={9} fontWeight={600}>
           Yield: {yieldPct.toFixed(2)}%
         </text>
 
-        <rect x={PAD_L + 4} y={PAD_T + 14} width={8} height={8} rx={1} fill={FAIL_FILL} stroke="rgba(255,59,48,0.6)" strokeWidth={0.5} />
-        <text x={PAD_L + 15} y={PAD_T + 21} fill="#c0392b" fontSize={9} fontWeight={600}>
+        <rect x={PAD_L + 4} y={PAD_T + 14} width={8} height={8} rx={1} fill={FAIL_FILL} stroke={css('--plot-fail-stroke')} strokeWidth={0.5} />
+        <text x={PAD_L + 15} y={PAD_T + 21} fill={css('--plot-fail-label')} fontSize={9} fontWeight={600}>
           F/R: {frLabel}
         </text>
       </svg>

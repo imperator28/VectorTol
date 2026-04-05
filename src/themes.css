@@ -1,0 +1,390 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   VectorTol Design Tokens — Light & Dark themes
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Light Theme (default) ─────────────────────────────────────────────────── */
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+
+  /* Backgrounds */
+  --bg-app: #f1f5f9;
+  --bg-surface: #ffffff;
+  --bg-surface-alt: #f8fafc;
+  --bg-elevated: #ffffff;
+  --bg-hover: #f1f5f9;
+  --bg-active: #e2e8f0;
+  --bg-canvas: #f8fafc;
+  --bg-input: #ffffff;
+  --bg-badge: #f1f5f9;
+
+  /* Text */
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-tertiary: #94a3b8;
+  --text-inverse: #ffffff;
+  --text-placeholder: #cbd5e1;
+
+  /* Borders */
+  --border-primary: #e2e8f0;
+  --border-secondary: #cbd5e1;
+  --border-subtle: #f1f5f9;
+  --border-input: #cbd5e1;
+  --border-input-focus: #6366f1;
+
+  /* Accent (Indigo) */
+  --accent: #6366f1;
+  --accent-hover: #4f46e5;
+  --accent-bg: #eef2ff;
+  --accent-text: #4338ca;
+  --accent-border: #c7d2fe;
+
+  /* Success (Emerald) */
+  --success: #10b981;
+  --success-bg: #ecfdf5;
+  --success-text: #065f46;
+  --success-border: #a7f3d0;
+
+  /* Danger (Red) */
+  --danger: #ef4444;
+  --danger-bg: #fef2f2;
+  --danger-text: #991b1b;
+  --danger-border: #fecaca;
+
+  /* Warning (Amber) */
+  --warning: #f59e0b;
+  --warning-bg: #fffbeb;
+  --warning-text: #92400e;
+  --warning-border: #fde68a;
+
+  /* Info (Blue) */
+  --info: #3b82f6;
+  --info-bg: #eff6ff;
+  --info-text: #1e40af;
+  --info-border: #bfdbfe;
+
+  /* Shadows */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.07);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.1);
+
+  /* Divider */
+  --divider: #e2e8f0;
+  --divider-hover: #6366f1;
+
+  /* Direction toggle */
+  --dir-pos-bg: #eef2ff;
+  --dir-pos-text: #4f46e5;
+  --dir-neg-bg: #fef2f2;
+  --dir-neg-text: #dc2626;
+
+  /* Strategy colors */
+  --tighten: #1e40af;
+  --loosen: #065f46;
+  --asym: #7c3aed;
+
+  /* Plot colors */
+  --plot-curve: #0f172a;
+  --plot-mean: #6366f1;
+  --plot-boundary: #f59e0b;
+  --plot-pass-fill: rgba(16, 185, 129, 0.25);
+  --plot-pass-stroke: rgba(16, 185, 129, 0.6);
+  --plot-fail-fill: rgba(239, 68, 68, 0.25);
+  --plot-fail-stroke: rgba(239, 68, 68, 0.5);
+  --plot-fail-label: #dc2626;
+  --plot-hist-fill: rgba(99, 102, 241, 0.2);
+  --plot-hist-stroke: rgba(99, 102, 241, 0.6);
+  --plot-grid: #e2e8f0;
+  --plot-axis: #475569;
+  --plot-text: #475569;
+  --plot-yield: #059669;
+
+  /* Dirty indicator */
+  --dirty: #ea580c;
+
+  /* Scrollbar */
+  --scrollbar-track: transparent;
+  --scrollbar-thumb: #cbd5e1;
+  --scrollbar-thumb-hover: #94a3b8;
+}
+
+/* ── Dark Theme ────────────────────────────────────────────────────────────── */
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* Backgrounds */
+  --bg-app: #0c0f1a;
+  --bg-surface: #161b2e;
+  --bg-surface-alt: #1c2237;
+  --bg-elevated: #222840;
+  --bg-hover: #1e2540;
+  --bg-active: #2a3355;
+  --bg-canvas: #0f1320;
+  --bg-input: #1c2237;
+  --bg-badge: #1e2540;
+
+  /* Text */
+  --text-primary: #e2e8f0;
+  --text-secondary: #94a3b8;
+  --text-tertiary: #64748b;
+  --text-inverse: #0f172a;
+  --text-placeholder: #475569;
+
+  /* Borders */
+  --border-primary: #2a3355;
+  --border-secondary: #334167;
+  --border-subtle: #1e2540;
+  --border-input: #334167;
+  --border-input-focus: #818cf8;
+
+  /* Accent */
+  --accent: #818cf8;
+  --accent-hover: #a5b4fc;
+  --accent-bg: rgba(99, 102, 241, 0.15);
+  --accent-text: #c7d2fe;
+  --accent-border: rgba(99, 102, 241, 0.3);
+
+  /* Success */
+  --success: #34d399;
+  --success-bg: rgba(16, 185, 129, 0.15);
+  --success-text: #a7f3d0;
+  --success-border: rgba(16, 185, 129, 0.3);
+
+  /* Danger */
+  --danger: #f87171;
+  --danger-bg: rgba(239, 68, 68, 0.15);
+  --danger-text: #fecaca;
+  --danger-border: rgba(239, 68, 68, 0.3);
+
+  /* Warning */
+  --warning: #fbbf24;
+  --warning-bg: rgba(245, 158, 11, 0.15);
+  --warning-text: #fde68a;
+  --warning-border: rgba(245, 158, 11, 0.3);
+
+  /* Info */
+  --info: #60a5fa;
+  --info-bg: rgba(59, 130, 246, 0.15);
+  --info-text: #bfdbfe;
+  --info-border: rgba(59, 130, 246, 0.3);
+
+  /* Shadows */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.45);
+
+  /* Divider */
+  --divider: #2a3355;
+  --divider-hover: #818cf8;
+
+  /* Direction toggle */
+  --dir-pos-bg: rgba(99, 102, 241, 0.18);
+  --dir-pos-text: #a5b4fc;
+  --dir-neg-bg: rgba(239, 68, 68, 0.18);
+  --dir-neg-text: #fca5a5;
+
+  /* Strategy colors */
+  --tighten: #93c5fd;
+  --loosen: #6ee7b7;
+  --asym: #c4b5fd;
+
+  /* Plot colors */
+  --plot-curve: #e2e8f0;
+  --plot-mean: #818cf8;
+  --plot-boundary: #fbbf24;
+  --plot-pass-fill: rgba(52, 211, 153, 0.2);
+  --plot-pass-stroke: rgba(52, 211, 153, 0.6);
+  --plot-fail-fill: rgba(248, 113, 113, 0.2);
+  --plot-fail-stroke: rgba(248, 113, 113, 0.5);
+  --plot-fail-label: #f87171;
+  --plot-hist-fill: rgba(129, 140, 248, 0.2);
+  --plot-hist-stroke: rgba(129, 140, 248, 0.6);
+  --plot-grid: #2a3355;
+  --plot-axis: #94a3b8;
+  --plot-text: #94a3b8;
+  --plot-yield: #34d399;
+
+  /* Dirty indicator */
+  --dirty: #fb923c;
+
+  /* Scrollbar */
+  --scrollbar-track: transparent;
+  --scrollbar-thumb: #334167;
+  --scrollbar-thumb-hover: #475569;
+}
+
+/* ── Swiss International Theme ─────────────────────────────────────────────── */
+[data-theme="swiss"] {
+  color-scheme: light;
+
+  /* Backgrounds — pure white ground, structure through borders */
+  --bg-app: #FFFFFF;
+  --bg-surface: #FFFFFF;
+  --bg-surface-alt: #F2F2F2;
+  --bg-elevated: #FFFFFF;
+  --bg-hover: #F0F0F0;
+  --bg-active: #E0E0E0;
+  --bg-canvas: #FAFAFA;
+  --bg-input: #FFFFFF;
+  --bg-badge: #F2F2F2;
+
+  /* Text — pure black, high contrast */
+  --text-primary: #000000;
+  --text-secondary: #333333;
+  --text-tertiary: #888888;
+  --text-inverse: #FFFFFF;
+  --text-placeholder: #BBBBBB;
+
+  /* Borders — black, visible, structural */
+  --border-primary: #000000;
+  --border-secondary: #333333;
+  --border-subtle: #E0E0E0;
+  --border-input: #000000;
+  --border-input-focus: #FF3000;
+
+  /* Accent — Swiss Red, the sole signal color */
+  --accent: #FF3000;
+  --accent-hover: #CC2600;
+  --accent-bg: rgba(255, 48, 0, 0.06);
+  --accent-text: #FF3000;
+  --accent-border: rgba(255, 48, 0, 0.3);
+
+  /* Success — monochrome pass (structure, not color) */
+  --success: #000000;
+  --success-bg: #F2F2F2;
+  --success-text: #000000;
+  --success-border: #000000;
+
+  /* Danger — Swiss Red for failure */
+  --danger: #FF3000;
+  --danger-bg: rgba(255, 48, 0, 0.06);
+  --danger-text: #FF3000;
+  --danger-border: #FF3000;
+
+  /* Warning — dark gray, no yellow */
+  --warning: #666666;
+  --warning-bg: #F2F2F2;
+  --warning-text: #333333;
+  --warning-border: #999999;
+
+  /* Info — dark gray, no blue */
+  --info: #333333;
+  --info-bg: #F2F2F2;
+  --info-text: #000000;
+  --info-border: #999999;
+
+  /* Shadows — NONE. Structure comes from borders. */
+  --shadow-xs: none;
+  --shadow-sm: none;
+  --shadow-md: none;
+  --shadow-lg: none;
+
+  /* Dividers — black, bold */
+  --divider: #000000;
+  --divider-hover: #FF3000;
+
+  /* Direction toggle */
+  --dir-pos-bg: #F2F2F2;
+  --dir-pos-text: #000000;
+  --dir-neg-bg: rgba(255, 48, 0, 0.06);
+  --dir-neg-text: #FF3000;
+
+  /* Strategy colors — monochrome */
+  --tighten: #000000;
+  --loosen: #555555;
+  --asym: #888888;
+
+  /* Plot colors — monochrome with red for failure */
+  --plot-curve: #000000;
+  --plot-mean: #000000;
+  --plot-boundary: #FF3000;
+  --plot-pass-fill: rgba(0, 0, 0, 0.08);
+  --plot-pass-stroke: rgba(0, 0, 0, 0.5);
+  --plot-fail-fill: rgba(255, 48, 0, 0.15);
+  --plot-fail-stroke: rgba(255, 48, 0, 0.6);
+  --plot-fail-label: #FF3000;
+  --plot-hist-fill: rgba(0, 0, 0, 0.08);
+  --plot-hist-stroke: rgba(0, 0, 0, 0.4);
+  --plot-grid: #E0E0E0;
+  --plot-axis: #000000;
+  --plot-text: #333333;
+  --plot-yield: #000000;
+
+  /* Dirty indicator */
+  --dirty: #FF3000;
+
+  /* Scrollbar */
+  --scrollbar-track: transparent;
+  --scrollbar-thumb: #999999;
+  --scrollbar-thumb-hover: #666666;
+
+  /* Swiss overrides: zero radii, visible structure */
+  --radius-sm: 0px;
+  --radius-md: 0px;
+  --radius-lg: 0px;
+  --radius-xl: 0px;
+  --radius-full: 0px;
+
+  /* Faster, mechanical transitions */
+  --transition-fast: 0.08s linear;
+  --transition-normal: 0.1s linear;
+  --transition-slow: 0.15s linear;
+}
+
+/* ── Shared constants (theme-independent) ──────────────────────────────────── */
+:root {
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-full: 9999px;
+
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+
+  --transition-fast: 0.1s ease;
+  --transition-normal: 0.15s ease;
+  --transition-slow: 0.25s ease;
+}
+
+/* ── AG Grid theme overrides ───────────────────────────────────────────────── */
+.ag-theme-quartz,
+.ag-theme-quartz-dark {
+  --ag-background-color: var(--bg-surface);
+  --ag-header-background-color: var(--bg-surface-alt);
+  --ag-odd-row-background-color: var(--bg-surface);
+  --ag-row-border-color: var(--border-subtle);
+  --ag-border-color: var(--border-primary);
+  --ag-foreground-color: var(--text-primary);
+  --ag-secondary-foreground-color: var(--text-secondary);
+  --ag-header-foreground-color: var(--text-secondary);
+  --ag-row-hover-color: var(--bg-hover);
+  --ag-selected-row-background-color: var(--accent-bg);
+  --ag-font-family: var(--font-sans);
+  --ag-font-size: 12px;
+  --ag-header-height: 36px;
+  --ag-row-height: 34px;
+  --ag-cell-horizontal-padding: 10px;
+  --ag-borders: solid 1px;
+  --ag-border-radius: 0;
+  --ag-input-focus-border-color: var(--accent);
+  --ag-range-selection-border-color: var(--accent);
+}
+
+/* ── Scrollbar styling ─────────────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}

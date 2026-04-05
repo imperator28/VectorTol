@@ -44,9 +44,9 @@ export const columnDefs: ColDef[] = [
       fontWeight: 700,
       fontSize: '15px',
       cursor: 'pointer',
-      borderRadius: '4px',
-      color: params.value === 1 ? '#1d4ed8' : '#b91c1c',
-      background: params.value === 1 ? '#dbeafe' : '#fee2e2',
+      borderRadius: 'var(--radius-sm)',
+      color: params.value === 1 ? 'var(--dir-pos-text)' : 'var(--dir-neg-text)',
+      background: params.value === 1 ? 'var(--dir-pos-bg)' : 'var(--dir-neg-bg)',
     }),
   },
   {

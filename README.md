@@ -14,33 +14,42 @@ Mechanical engineers in high-precision consumer electronics rely on brittle Exce
 - **Precision arithmetic** via decimal.js — no floating-point rounding errors
 - **Worst-Case (WC) analysis** — total tolerance, absolute min/max
 - **Root Sum Square (RSS) analysis** — statistical tolerance, min/max, failure rate (ppm/%)
-- **Design Intent validation** — Clearance, Interference, Flush, Proud, Recess targets with live Pass/Fail
+- **Design Intent validation** — Clearance, Interference, Flush, Proud, Recess, Custom targets with live Pass/Fail
 - **% Contribution** highlighting — flags primary offenders (>25%) in red
 - **Asymmetric tolerance support** — proper mean-shift calculations
 - **.vtol project files** — self-contained JSON files for easy sharing
 - **CSV export**
 
 ### Phase 2 — Visual Canvas ✅
-- **Split-pane layout** — resizable divider between canvas and grid
+- **Split-pane layout** — resizable canvas and grid workspace
 - **Background image import** — drag-and-drop or button (PNG/JPG) with opacity overlay
 - **Vector drawing tool** — click-drag to draw arrows directly on cross-section images
 - **Auto-direction detection** — dominant axis determines +/- sign (Right/Up = +1, Left/Down = −1)
 - **Bi-directional sync** — drawing a vector creates a grid row; deleting either removes both
 - **Viewport-invariant sizing** — arrow thickness and labels stay constant regardless of zoom or image resolution
-- **Label scaling** — text caption scales proportionally with stroke width
-- **Color customization** — macOS system color palette (15 colors) + custom color picker for arrow color and highlight color
+- **Color customization** — 15-color palette + custom color picker for arrow color and highlight color
 - **Adjustable line width** — 1–5px per vector, changeable after drawing
 - **Undo/redo** — 50-step history for all operations (Ctrl+Z / Ctrl+Y)
 - **Pan & zoom** — scroll wheel zoom, left-drag pan, spacebar pan, middle mouse button pan (CAD-style)
 
 ### Phase 3 — Reporting Engine ✅
-- **PDF export** — one-click landscape A4 report: title block (project, author, date), annotated canvas diagram, full data table with % contribution flagged in red (>25%), WC and RSS results with color-coded PASS/FAIL, failure rate and yield
-- **XLSX export** — Excel workbook with all grid columns (including Ctr Nominal, Ctr TOL, % Contrib) plus WC/RSS results section on the same sheet
+- **PDF export** — one-click landscape A4 report: title block, annotated canvas diagram, full data table with % contribution, WC and RSS results with color-coded PASS/FAIL
+- **XLSX export** — Excel workbook with all grid columns plus WC/RSS results section
 - **CSV export** — raw stack-up data
-- **Direction lock** — constrain newly drawn vectors to horizontal or vertical only (L key / ⊥ Lock button)
-- **Magnetic snap** — arrow endpoints auto-snap to nearest existing vector endpoint within 16px (S key / 🧲 Snap button); snap takes priority over direction lock
+- **Direction lock** — constrain newly drawn vectors to horizontal or vertical only (L key)
+- **Magnetic snap** — arrow endpoints auto-snap to nearest existing vector endpoint within 16px (S key)
 - **Editable project metadata** — inline project name and author fields in the toolbar
-- **Browser-compatible save/open** — falls back to browser download / file picker when running outside Tauri
+
+### Phase 4 — Smart Analysis & Professional UI ✅
+- **ISO 286 Tolerance Standards** — Tolerance Source column auto-fills ±TOL from IT grades for machining, turning, grinding, milling, reaming, boring, lapping, honing
+- **Tolerance Allocation (Goal Seek)** — 5 strategies: Proportional, Top Contributors, Grade Step, Asymmetric Shift, Relaxation. Apply per-row or all at once
+- **Nominal Adjustment Advisor** — suggests which nominal dimensions to change when gap fails; 3 strategies with per-row lock/unlock; Closing-link, Equal-split, Weighted by adjustability
+- **Monte Carlo Simulation** — 10K–1M iterations, histogram with pass/fail colouring, σ-labels, yield % and failure rate
+- **Direction toggle** — single-click pill toggles +/− in the grid (no dropdown)
+- **Multi-theme UI** — Light, Dark, and Swiss International themes, cycling via toolbar button; persists to localStorage
+- **Flat icon system** — 25 Lucide-inspired SVG icons throughout the UI
+- **Two-panel layout** — Workspace (canvas + grid) on the left; Design Intent + Analysis Results + Advisors on the right
+- **Color picker portal** — picker renders above the canvas toolbar, escaping overflow clipping
 
 ### Keyboard Shortcuts
 
@@ -58,8 +67,30 @@ Mechanical engineers in high-precision consumer electronics rely on brittle Exce
 | Ctrl+Z | Undo |
 | Ctrl+Y / Ctrl+Shift+Z | Redo |
 
-### Planned
-- **Phase 4:** Smart tolerance suggestions (ISO 286 IT grades), tolerance allocation / goal seek, Monte Carlo simulation (Rust backend)
+## Layout
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  Toolbar: New · Open · Save │ +Row -Row │ PDF XLSX CSV │ meta 🌙│
+├──────────────────────────────────┬──────────────────────────────┤
+│ CANVAS ▴                         │ DESIGN INTENT                │
+│  ┌─ canvas toolbar ────────────┐ │  Type: Clearance ▾           │
+│  │ Undo Redo │ Select Draw │…  │ │  Min Gap: 0.05               │
+│  └─────────────────────────────┘ ├──────────────────────────────┤
+│  ┌─ Konva canvas ──────────────┐ │ ANALYSIS RESULTS             │
+│  │   (vectors + image)         │ │  Gap │ WC PASS │ RSS PASS     │
+│  └─────────────────────────────┘ │  RSS Yield: 100.00%          │
+├──────────────────────────────────│  [distribution plot]         │
+│ STACK-UP                         │  [MC histogram]              │
+│  ┌─ AG Grid ───────────────────┐ ├──────────────────────────────┤
+│  │ # │ Part │ Tol │ +/- │ … │  │ TOLERANCE ALLOCATION         │
+│  │ · │ …    │     │     │   │  │  ✓ Design intent met         │
+│  └─────────────────────────────┘ │  [strategy cards]            │
+│                                  ├──────────────────────────────┤
+│                                  │ NOMINAL ADVISOR              │
+│                                  │  [strategy cards]            │
+└──────────────────────────────────┴──────────────────────────────┘
+```
 
 ## Tech Stack
 
@@ -73,7 +104,17 @@ Mechanical engineers in high-precision consumer electronics rely on brittle Exce
 | Precision math | decimal.js |
 | PDF export | jsPDF + jspdf-autotable |
 | XLSX export | SheetJS (xlsx) |
-| Monte Carlo (Phase 4) | Rust backend via Tauri IPC |
+| Theming | CSS Custom Properties (3 themes) |
+
+## Themes
+
+| Theme | Trigger | Character |
+|-------|---------|-----------|
+| **Light** | 🌙 | Slate/indigo, soft shadows, rounded corners |
+| **Dark** | ⬡ | Deep navy, lighter accents |
+| **Swiss International** | ☀ | Black/white + Swiss Red #FF3000, zero radius, grid texture |
+
+Click the icon button at the top-right of the toolbar to cycle themes. Preference persists across sessions.
 
 ## Getting Started
 
@@ -89,6 +130,14 @@ npm install
 npm run tauri dev
 ```
 
+### Run in Browser (no Tauri)
+
+```bash
+npm run dev
+```
+
+File save/open falls back to browser download / file picker.
+
 ### Run Tests
 
 ```bash
@@ -101,20 +150,22 @@ npm run test
 npm run tauri build
 ```
 
-This produces a portable `.exe` (Windows) or `.dmg` (macOS) in `src-tauri/target/release/bundle/`.
+Produces a portable `.exe` (Windows) or `.dmg` (macOS) in `src-tauri/target/release/bundle/`.
 
 ## Project Structure
 
 ```
 ├── src/                    # React frontend
 │   ├── components/
-│   │   ├── canvas/         # Konva canvas, vector tools, color picker
+│   │   ├── canvas/         # Konva canvas, vector tools, color picker (portal)
 │   │   ├── grid/           # AG Grid wrapper, column defs, cell renderers
-│   │   ├── summary/        # Live results footer (WC, RSS, Pass/Fail)
-│   │   ├── targets/        # Design Intent panel
-│   │   └── toolbar/        # Top toolbar (file ops, export)
-│   ├── engine/             # Math engine (calculations, worstCase, rss, decimal)
-│   ├── store/              # Zustand stores (project + undo/redo, UI, settings)
+│   │   ├── summary/        # Analysis results, distribution plot, Monte Carlo
+│   │   ├── targets/        # Design Intent, Goal Seek, Nominal Advisor panels
+│   │   ├── toolbar/        # Top toolbar (file ops, export, theme)
+│   │   └── ui/             # Icon component (25 SVG icons)
+│   ├── engine/             # Math engine (WC, RSS, Monte Carlo, standards, decimal)
+│   ├── store/              # Zustand stores (project, UI, settings, theme)
+│   ├── themes.css          # CSS custom property tokens (light / dark / swiss)
 │   ├── types/              # TypeScript interfaces (grid, canvas, project)
 │   └── utils/              # File I/O, CSV/PDF/XLSX export, Konva stage ref
 ├── src-tauri/              # Rust backend
@@ -126,7 +177,7 @@ This produces a portable `.exe` (Windows) or `.dmg` (macOS) in `src-tauri/target
 
 ## File Format
 
-Projects are saved as `.vtol` files — self-contained JSON with grid data, canvas vectors, embedded background images (base64), image transforms, and settings in a single shareable file. Files saved before Phase 2 load correctly with an empty canvas.
+Projects are saved as `.vtol` files — self-contained JSON with grid data, canvas vectors, embedded background images (base64), image transforms, and settings. Files saved in earlier phases load correctly in later versions.
 
 ## Security
 

@@ -17,59 +17,85 @@ function formatPct(rate: number): string {
 export function ResultsFooter() {
   const results = useProjectStore((s) => s.results);
   const rows = useProjectStore((s) => s.rows);
+  const target = useProjectStore((s) => s.target);
 
   if (rows.length === 0) {
     return (
       <div className="results-footer">
-        <p className="results-empty">Add dimensions to see analysis results.</p>
+        <p className="results-empty">Add stack-up rows to see results.</p>
       </div>
     );
+  }
+
+  // Build target range subtitle
+  const lo = target.minGap;
+  const hi = target.maxGap;
+  let targetRange = '';
+  if (lo !== null && hi !== null) {
+    targetRange = `${lo} to ${hi}`;
+  } else if (lo !== null) {
+    targetRange = `min ${lo}`;
+  } else if (hi !== null) {
+    targetRange = `max ${hi}`;
   }
 
   return (
     <McProvider>
     <div className="results-footer">
-      {/* Cards row */}
+      {/* Cards row — CSS grid for consistent sizing */}
       <div className="results-cards">
+        {/* Gap card — with target context */}
         <div className="result-card">
-          <h4>Gap (Target)</h4>
+          <h4>Gap</h4>
           <span className="result-value result-value-lg">{fmt(results.gap)}</span>
+          {targetRange && (
+            <span className="result-subtitle">
+              {target.type}: {targetRange}
+            </span>
+          )}
         </div>
 
+        {/* Worst Case — verdict-first layout */}
         <div className="result-card">
-          <h4>Worst Case</h4>
+          <div className="result-card-header">
+            <h4>Worst Case</h4>
+            <span className={`pass-badge ${results.wcPass ? 'pass' : 'fail'}`}>
+              {results.wcPass ? 'PASS' : 'FAIL'}
+            </span>
+          </div>
           <table className="results-table">
             <tbody>
-              <tr><td>Tolerance:</td><td className="result-value">{fmt(results.wcTolerance)}</td></tr>
-              <tr><td>Min:</td><td className="result-value">{fmt(results.wcMin)}</td></tr>
-              <tr><td>Max:</td><td className="result-value">{fmt(results.wcMax)}</td></tr>
+              <tr><td>Tol</td><td className="result-value">{fmt(results.wcTolerance)}</td></tr>
+              <tr><td>Min</td><td className="result-value">{fmt(results.wcMin)}</td></tr>
+              <tr><td>Max</td><td className="result-value">{fmt(results.wcMax)}</td></tr>
             </tbody>
           </table>
-          <span className={`pass-badge ${results.wcPass ? 'pass' : 'fail'}`}>
-            {results.wcPass ? 'PASS' : 'FAIL'}
-          </span>
         </div>
 
+        {/* RSS — verdict-first layout */}
         <div className="result-card">
-          <h4>RSS</h4>
+          <div className="result-card-header">
+            <h4>RSS</h4>
+            <span className={`pass-badge ${results.rssPass ? 'pass' : 'fail'}`}>
+              {results.rssPass ? 'PASS' : 'FAIL'}
+            </span>
+          </div>
           <table className="results-table">
             <tbody>
-              <tr><td>Tolerance:</td><td className="result-value">{fmt(results.rssTolerance)}</td></tr>
-              <tr><td>Min:</td><td className="result-value">{fmt(results.rssMin)}</td></tr>
-              <tr><td>Max:</td><td className="result-value">{fmt(results.rssMax)}</td></tr>
+              <tr><td>Tol</td><td className="result-value">{fmt(results.rssTolerance)}</td></tr>
+              <tr><td>Min</td><td className="result-value">{fmt(results.rssMin)}</td></tr>
+              <tr><td>Max</td><td className="result-value">{fmt(results.rssMax)}</td></tr>
             </tbody>
           </table>
-          <span className={`pass-badge ${results.rssPass ? 'pass' : 'fail'}`}>
-            {results.rssPass ? 'PASS' : 'FAIL'}
-          </span>
         </div>
 
+        {/* RSS Yield — yield as primary value */}
         <div className="result-card">
-          <h4>RSS F/R</h4>
+          <h4>RSS Yield</h4>
+          <span className="result-value result-value-lg result-yield">{results.rssYieldPercent.toFixed(2)}%</span>
           <table className="results-table">
             <tbody>
-              <tr><td>Failure Rate:</td><td className="result-value">{formatPct(results.rssFailureRate)}</td></tr>
-              <tr><td>Yield:</td><td className="result-value">{results.rssYieldPercent.toFixed(4)}%</td></tr>
+              <tr><td>F/R</td><td className="result-value">{formatPct(results.rssFailureRate)}</td></tr>
             </tbody>
           </table>
         </div>

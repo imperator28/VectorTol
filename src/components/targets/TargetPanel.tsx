@@ -97,7 +97,6 @@ export function TargetPanel() {
 
   return (
     <div className="target-panel">
-      <h3>Design Intent</h3>
       <div className="target-fields">
         <label>
           Type:

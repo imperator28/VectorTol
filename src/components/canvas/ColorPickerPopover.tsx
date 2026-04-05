@@ -1,4 +1,5 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 export const MAC_PALETTE = [
   { name: 'Red',    value: '#FF3B30' },
@@ -23,24 +24,44 @@ interface Props {
   onChange: (color: string) => void;
   onClose: () => void;
   label: string;
+  /** The button element the picker is anchored to — used for portal positioning */
+  anchorEl: HTMLElement | null;
 }
 
-export function ColorPickerPopover({ currentColor, onChange, onClose, label }: Props) {
+export function ColorPickerPopover({ currentColor, onChange, onClose, label, anchorEl }: Props) {
   const ref = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
+
+  // Calculate portal position from the anchor button
+  useEffect(() => {
+    if (!anchorEl) return;
+    const r = anchorEl.getBoundingClientRect();
+    setPos({
+      top: r.bottom + 8,
+      left: Math.min(r.left, window.innerWidth - 224),
+    });
+  }, [anchorEl]);
 
   // Close on outside click
   useEffect(() => {
     function onDown(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        onClose();
-      }
+      const target = e.target as Node;
+      const inPopover = ref.current?.contains(target);
+      const inAnchor = anchorEl?.contains(target);
+      if (!inPopover && !inAnchor) onClose();
     }
     document.addEventListener('mousedown', onDown);
     return () => document.removeEventListener('mousedown', onDown);
-  }, [onClose]);
+  }, [onClose, anchorEl]);
 
-  return (
-    <div className="color-picker-popover" ref={ref}>
+  if (!pos) return null;
+
+  return createPortal(
+    <div
+      className="color-picker-popover"
+      ref={ref}
+      style={{ position: 'fixed', top: pos.top, left: pos.left }}
+    >
       <div className="color-picker-label">{label}</div>
       <div className="color-palette">
         {MAC_PALETTE.map((c) => (
@@ -63,6 +84,7 @@ export function ColorPickerPopover({ currentColor, onChange, onClose, label }: P
         />
         <span className="color-picker-hex">{currentColor.toUpperCase()}</span>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

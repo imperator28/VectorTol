@@ -79,7 +79,7 @@ export function StackGrid() {
   );
 
   return (
-    <div style={{ flex: 1, width: '100%' }}>
+    <div className="ag-theme-quartz" style={{ flex: 1, width: '100%' }}>
       <AgGridReact<StackRow>
         rowData={rows}
         columnDefs={columnDefs}
