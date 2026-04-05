@@ -276,9 +276,19 @@
   gap: 6px;
 }
 
-.insights-panel .results-plots-row {
+.results-plot-cards {
+  display: flex;
   flex-direction: column;
   gap: 6px;
+  flex-shrink: 0;
+}
+
+.result-card-plot {
+  gap: 6px;
+}
+
+.result-card-plot-body {
+  /* Slight padding so plot doesn't touch card edges */
 }
 
 /* Suppress internal panel headings — label bars provide section names */
@@ -287,17 +297,18 @@
   display: none;
 }
 
-/* Remove extra top-margin/padding since label bar is the separator */
+/* Consistent 12px padding matching Design Intent section */
 .insights-panel .goalseek-panel {
-  margin-top: 0;
-  padding-top: 6px;
+  margin: 0;
+  padding: 8px 12px 12px;
   border-top: none;
 }
 
 .insights-panel .nominal-advisor-panel {
-  margin-top: 0;
-  padding-top: 0;
+  margin: 0;
+  padding: 8px 12px 12px;
   border-top: none;
+  overflow-y: visible;
 }
 
 /* Target panel inside intent section */
@@ -669,6 +680,110 @@
   color: var(--text-tertiary);
   font-size: 12px;
   font-style: italic;
+}
+
+/* ── Plot expand button ─────────────────────────────────────────────────────── */
+.plot-expand-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  padding: 0;
+  transition: all var(--transition-fast);
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.plot-expand-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  border-color: var(--border-secondary);
+}
+
+/* ── Plot expand modal ──────────────────────────────────────────────────────── */
+.plot-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  backdrop-filter: blur(2px);
+}
+
+.plot-modal-content {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+  width: min(90vw, 780px);
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.plot-modal-header {
+  display: flex;
+  align-items: center;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border-primary);
+  flex-shrink: 0;
+}
+
+.plot-modal-title {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-secondary);
+  flex: 1;
+}
+
+.plot-modal-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  padding: 0;
+  transition: all var(--transition-fast);
+}
+
+.plot-modal-close:hover {
+  background: var(--bg-hover);
+  color: var(--danger);
+  border-color: var(--danger-border);
+}
+
+.plot-modal-body {
+  padding: 16px 20px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+/* Swiss theme overrides for modal */
+[data-theme="swiss"] .plot-modal-content {
+  border-radius: 0;
+  border-width: 2px;
+}
+
+[data-theme="swiss"] .plot-modal-overlay {
+  backdrop-filter: none;
+  background: rgba(0, 0, 0, 0.7);
 }
 
 /* ── Canvas Toolbar ────────────────────────────────────────────────────────── */

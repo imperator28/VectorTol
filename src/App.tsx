@@ -167,12 +167,7 @@ export function App() {
             </div>
           </div>
 
-          {/* 2. Analysis Results — resizable */}
-          <div
-            className="rp-divider"
-            onMouseDown={startResultsResize}
-            title="Drag to resize results"
-          />
+          {/* 2. Analysis Results — resizable, divider at bottom */}
           <div className="rp-section" style={{ height: resultsPx }}>
             <div className="rp-label-bar">
               <span className="rp-label-text">Analysis Results</span>
@@ -181,13 +176,13 @@ export function App() {
               <ResultsFooter />
             </div>
           </div>
-
-          {/* 3. Tolerance Allocation — collapsible + resizable */}
           <div
             className="rp-divider"
-            onMouseDown={startAllocResize}
+            onMouseDown={startResultsResize}
             title="Drag to resize"
           />
+
+          {/* 3. Tolerance Allocation — collapsible + resizable, divider at bottom */}
           <div
             className="rp-section"
             style={allocCollapsed ? undefined : { height: allocPx }}
@@ -212,9 +207,14 @@ export function App() {
               </div>
             )}
           </div>
+          <div
+            className="rp-divider"
+            onMouseDown={allocCollapsed ? undefined : startAllocResize}
+            title={allocCollapsed ? undefined : 'Drag to resize'}
+            style={allocCollapsed ? { cursor: 'default', opacity: 0.4 } : undefined}
+          />
 
           {/* 4. Nominal Advisor — collapsible, takes remaining space */}
-          <div className="rp-divider rp-divider-static" />
           <div
             className="rp-section rp-section-flex"
             style={{ minHeight: advisorCollapsed ? 0 : MIN_ADVISOR_PX }}
