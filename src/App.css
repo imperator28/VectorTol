@@ -80,7 +80,8 @@
 }
 
 .toolbar-meta-input {
-  padding: 4px 8px;
+  padding: 0 8px;
+  height: 28px;
   border: 1px solid var(--border-input);
   border-radius: var(--radius-md);
   font-size: 12px;
@@ -88,6 +89,7 @@
   background: var(--bg-input);
   color: var(--text-primary);
   width: 130px;
+  line-height: 1;
   transition: border-color var(--transition-fast);
 }
 
@@ -111,13 +113,13 @@
   border-radius: var(--radius-full);
 }
 
-/* Theme toggle */
+/* Theme toggle — match height of toolbar-meta-input */
 .theme-toggle {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   border: 1px solid var(--border-secondary) !important;
   border-radius: var(--radius-md) !important;
   background: var(--bg-surface) !important;
@@ -729,6 +731,11 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  /* Portaled outside .app — must explicitly set font */
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
 }
 
 .plot-modal-header {
@@ -893,6 +900,12 @@
   padding: 12px;
   box-shadow: var(--shadow-lg);
   min-width: 200px;
+  /* Portaled outside .app — must explicitly set font so it doesn't fall
+     back to the browser default serif/sans */
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
 }
 
 .color-picker-label {
