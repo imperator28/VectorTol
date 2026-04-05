@@ -902,3 +902,311 @@
   background: #16a34a;
   color: #fff;
 }
+
+/* ── Nominal Advisor Panel ───────────────────────────────────────────────────── */
+
+.nominal-advisor-panel {
+  padding: 10px 10px 14px;
+  border-top: 1px solid #e5e7eb;
+  overflow-y: auto;
+}
+
+.nominal-advisor-panel h3 {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #374151;
+  margin: 0 0 8px;
+}
+
+.na-banner {
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 4px;
+  padding: 5px 8px;
+  margin-bottom: 8px;
+}
+.na-banner-pass { background: #dcfce7; color: #166534; }
+.na-banner-fail { background: #fee2e2; color: #991b1b; }
+
+.na-budget-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  margin-bottom: 8px;
+}
+.na-bud-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.na-bud-label {
+  font-size: 9px;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.na-bud-val {
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 11px;
+  font-weight: 600;
+  color: #111827;
+}
+.na-bud-ok   { color: #16a34a; }
+.na-bud-over { color: #dc2626; }
+
+/* Adjustability toggle */
+.na-toggle-adj {
+  all: unset;
+  cursor: pointer;
+  font-size: 10px;
+  color: #6b7280;
+  margin-bottom: 4px;
+  display: block;
+}
+.na-toggle-adj:hover { color: #111827; }
+
+/* Adjustability table */
+.na-adj-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 10px;
+  margin-bottom: 8px;
+}
+.na-adj-table th {
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  font-size: 9px;
+  padding: 2px 4px;
+  border-bottom: 1px solid #e5e7eb;
+  text-align: left;
+}
+.na-adj-table td { padding: 3px 4px; }
+.na-adj-name {
+  max-width: 90px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.na-adj-nom {
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 10px;
+  color: #374151;
+}
+.na-adj-stars { font-size: 10px; color: #f59e0b; letter-spacing: -2px; }
+.na-row-locked { opacity: 0.45; }
+
+/* Lock button */
+.na-lock-btn {
+  all: unset;
+  cursor: pointer;
+  font-size: 10px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.na-lock-btn-on { opacity: 1; }
+
+/* Badges */
+.na-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-size: 9px;
+  font-weight: 600;
+}
+.na-badge-pass { background: #dcfce7; color: #166534; }
+.na-badge-fail { background: #fee2e2; color: #991b1b; }
+
+/* Strategy list */
+.na-strategies {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.na-strategy {
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #fff;
+}
+.na-strategy-feasible   { border-color: #d1d5db; }
+.na-strategy-infeasible { background: #fafafa; opacity: 0.8; }
+.na-strategy-recommended { border-color: #3b82f6; border-width: 2px; }
+
+.na-strategy-header {
+  all: unset;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 7px 8px;
+  cursor: pointer;
+  box-sizing: border-box;
+  background: #f9fafb;
+}
+.na-strategy-header:hover { background: #f0f0f0; }
+.na-strategy-icon { font-size: 13px; flex-shrink: 0; }
+.na-strategy-label {
+  flex: 1;
+  font-size: 11px;
+  font-weight: 600;
+  color: #111827;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.na-strategy-arrow { font-size: 9px; color: #aaa; flex-shrink: 0; }
+
+.na-recommended-badge {
+  font-size: 9px;
+  font-weight: 700;
+  background: #3b82f6;
+  color: #fff;
+  border-radius: 3px;
+  padding: 1px 5px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.na-strategy-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 8px 6px;
+  border-top: 1px solid #f3f4f6;
+}
+.na-strategy-gap {
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 10px;
+  color: #374151;
+  flex: 1;
+}
+.na-infeasible-note {
+  font-size: 10px;
+  color: #b45309;
+  font-style: italic;
+}
+
+.na-strategy-detail {
+  padding: 6px 8px 8px;
+  border-top: 1px solid #f3f4f6;
+  background: #fff;
+}
+.na-strategy-desc {
+  font-size: 10px;
+  color: #6b7280;
+  line-height: 1.45;
+  margin: 0 0 8px;
+}
+
+/* Change table */
+.na-change-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 10px;
+  margin-bottom: 4px;
+}
+.na-change-table th {
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  font-size: 9px;
+  padding: 2px 4px;
+  border-bottom: 1px solid #e5e7eb;
+  text-align: left;
+}
+.na-change-table td { padding: 3px 4px; }
+.na-part-name {
+  max-width: 70px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.na-num {
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 10px;
+  color: #374151;
+}
+.na-delta { font-weight: 700; }
+.na-delta-pos { color: #0369a1; }
+.na-delta-neg { color: #dc2626; }
+.na-pct {
+  font-size: 8px;
+  color: #9ca3af;
+  margin-left: 2px;
+}
+.na-to-nom { color: #111827; }
+.na-no-changes {
+  font-size: 10px;
+  color: #aaa;
+  font-style: italic;
+  margin: 0;
+}
+
+/* Apply buttons */
+.na-apply-cell {
+  text-align: right;
+  white-space: nowrap;
+  padding-left: 4px;
+}
+.na-apply-btn {
+  padding: 2px 6px;
+  border: 1px solid #3b82f6;
+  border-radius: 3px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-size: 9px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.na-apply-btn:hover {
+  background: #3b82f6;
+  color: #fff;
+}
+
+.na-apply-all-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 6px;
+}
+.na-apply-all-btn {
+  padding: 4px 10px;
+  border: 1px solid #16a34a;
+  border-radius: 4px;
+  background: #f0fdf4;
+  color: #15803d;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.na-apply-all-btn:hover {
+  background: #16a34a;
+  color: #fff;
+}
+
+/* Global messages */
+.na-all-ok {
+  font-size: 11px;
+  color: #16a34a;
+  font-style: italic;
+  margin-top: 4px;
+}
+.na-advisory {
+  font-size: 10px;
+  color: #b45309;
+  background: #fef9c3;
+  border-radius: 4px;
+  padding: 5px 8px;
+  margin-top: 6px;
+  line-height: 1.45;
+}

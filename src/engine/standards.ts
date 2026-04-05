@@ -821,3 +821,340 @@ export function runSmartAllocation(
     strategies,
   };
 }
+
+// ── Nominal Adjustment Advisor ──────────────────────────────────────────────
+
+/**
+ * Manufacturing adjustability score per process.
+ * Reflects the real cost and difficulty of changing a nominal dimension:
+ *   1.0 = drawing-only change, zero tooling cost
+ *   0.1 = requires expensive retooling or is constrained by standard stock
+ */
+const SOURCE_ADJUSTABILITY: Record<ToleranceSource, { score: number; note: string }> = {
+  assembly:  { score: 1.0, note: 'Assembly gap / designed clearance — ideal; consider a dedicated shim or spacer.' },
+  machining: { score: 0.8, note: 'CNC-machined — nominal change is a drawing revision only, no tooling cost.' },
+  stamping:  { score: 0.5, note: 'Stamped part — nominal change requires progressive-die tool modification.' },
+  mold:      { score: 0.3, note: 'Injection-molded — requires mold modification or insert; expensive.' },
+  casting:   { score: 0.2, note: 'Cast part — pattern or die modification needed; high cost and lead time.' },
+  material:  { score: 0.1, note: 'Stock material — constrained by standard mill sizes; very limited flexibility.' },
+  custom:    { score: 0.5, note: 'Adjustability unknown — verify feasibility with supplier.' },
+};
+
+/** Render a 0-3 star rating for the adjustability score */
+export function adjustabilityStars(score: number): string {
+  if (score >= 0.8) return '★★★';
+  if (score >= 0.5) return '★★☆';
+  if (score >= 0.2) return '★☆☆';
+  return '☆☆☆';
+}
+
+// ── Nominal advisor types ────────────────────────────────────────────────────
+
+export interface NominalAdjInputRow {
+  id: string;
+  component: string;
+  dimId: string;
+  source: ToleranceSource;
+  direction: 1 | -1;
+  nominal: number;      // parsed number
+  centeredTol: number;  // effective half-tolerance
+}
+
+export interface NominalRowInfo {
+  id: string;
+  component: string;
+  dimId: string;
+  source: ToleranceSource;
+  nominal: number;
+  direction: 1 | -1;
+  centeredTol: number;
+  centeredNom: number;
+  adjustabilityScore: number;
+  adjustabilityNote: string;
+}
+
+export interface NominalChange {
+  rowId: string;
+  component: string;
+  dimId: string;
+  /** Change to the raw nominal field on the row (positive = increase the dimension) */
+  fromNominal: number;
+  toNominal: number;
+  delta: number;
+  /** |delta| as % of fromNominal — gives a sense of design impact */
+  deltaPercent: number;
+  note: string;
+}
+
+export interface NominalStrategy {
+  id: 'closing-link' | 'equal-split' | 'weighted-adjustability';
+  label: string;
+  description: string;
+  recommended: boolean;
+  feasible: boolean;
+  infeasibleReason?: string;
+  newNominalGap: number;
+  /** Tolerances unchanged — WC band same width, just shifted */
+  currentWcTol: number;
+  wcPassAfter: boolean;
+  rssPassAfter: boolean;
+  changes: NominalChange[];
+}
+
+export interface NominalAdvisorResult {
+  nominalGap: number;
+  currentWcTol: number;
+  currentRssTol: number;
+  /** How far the mean gap must shift to satisfy design intent (0 = already OK) */
+  neededGapShift: number;
+  wcCurrentlyPasses: boolean;
+  rows: NominalRowInfo[];
+  strategies: NominalStrategy[];
+}
+
+// ── Internal helpers ─────────────────────────────────────────────────────────
+
+/**
+ * Calculate how far the nominal gap must shift to satisfy WC design intent.
+ * Positive = gap must increase, negative = gap must decrease.
+ * Returns 0 when already passing.
+ */
+function computeNeededGapShift(
+  nomGap: number,
+  wcTol: number,
+  target: TargetScenario,
+): number {
+  if (checkPass(nomGap, wcTol, target)) return 0;
+
+  const lo = target.minGap !== null ? parseFloat(target.minGap) : null;
+  const hi = target.maxGap !== null ? parseFloat(target.maxGap) : null;
+
+  switch (target.type) {
+    case 'clearance':
+    case 'proud':
+      // Need wcMin = (nomGap + shift) − wcTol ≥ lo
+      return lo !== null ? lo + wcTol - nomGap : 0;
+
+    case 'recess':
+      // Need wcMax = (nomGap + shift) + wcTol ≤ hi
+      return hi !== null ? hi - wcTol - nomGap : 0;
+
+    case 'interference':
+      // Need wcMax ≤ lo AND wcMin ≥ hi
+      // Feasible gap: [hi + wcTol, lo − wcTol]; centre = (lo + hi) / 2
+      if (lo !== null && hi !== null) return (lo + hi) / 2 - nomGap;
+      if (lo !== null) return lo - wcTol - nomGap;
+      if (hi !== null) return hi + wcTol - nomGap;
+      return 0;
+
+    case 'flush':
+    case 'custom':
+      // Need wcMin ≥ lo AND wcMax ≤ hi; centre at (lo + hi) / 2
+      if (lo !== null && hi !== null) return (lo + hi) / 2 - nomGap;
+      if (lo !== null) return lo + wcTol - nomGap;
+      if (hi !== null) return hi - wcTol - nomGap;
+      return 0;
+  }
+}
+
+/**
+ * Build a NominalChange for a row, given the gap shift it must deliver.
+ * gapShareNeeded = the share of total gap shift this row must provide.
+ */
+function buildNominalChange(
+  row: NominalRowInfo,
+  gapShareNeeded: number,
+  note: string,
+): NominalChange {
+  // direction × Δnominal = gapShareNeeded → Δnominal = gapShareNeeded / direction
+  const delta = gapShareNeeded / row.direction;
+  const toNominal = row.nominal + delta;
+  const pct = row.nominal !== 0
+    ? (Math.abs(delta) / Math.abs(row.nominal)) * 100
+    : 0;
+  return {
+    rowId: row.id,
+    component: row.component,
+    dimId: row.dimId,
+    fromNominal: row.nominal,
+    toNominal,
+    delta,
+    deltaPercent: pct,
+    note,
+  };
+}
+
+// ── Main function ─────────────────────────────────────────────────────────────
+
+/**
+ * Nominal Adjustment Advisor.
+ *
+ * Answers: "Instead of tightening tolerances, which nominal dimensions
+ * should change, and by how much, to satisfy design intent?"
+ *
+ * Three strategies:
+ *
+ *  1. Closing Link — assign 100% of the required gap shift to the single
+ *     most adjustable (highest-score) unlocked dimension. Classic GD&T
+ *     compensating link. One drawing change; all tolerances unchanged.
+ *
+ *  2. Equal Distribution — split the shift equally across all unlocked
+ *     dimensions. Minimises the per-part change at the cost of more
+ *     drawing revisions.
+ *
+ *  3. Flexibility-Weighted — weight each dimension's share by its
+ *     manufacturing adjustability score. Assembly gaps / machined features
+ *     absorb more; cast or moulded parts absorb less. Most realistic for
+ *     a production redesign.
+ *
+ * lockedIds: set of row IDs the user has marked as non-adjustable (standard
+ * parts, purchased components, customer-defined dimensions).
+ */
+export function runNominalAdvisor(
+  inputRows: NominalAdjInputRow[],
+  target: TargetScenario,
+  lockedIds: Set<string>,
+): NominalAdvisorResult {
+  // ── Parse ─────────────────────────────────────────────────────────────────
+  const rows: NominalRowInfo[] = inputRows.map((r) => ({
+    id: r.id,
+    component: r.component,
+    dimId: r.dimId,
+    source: r.source,
+    nominal: r.nominal,
+    direction: r.direction,
+    centeredTol: r.centeredTol,
+    centeredNom: r.direction * r.nominal,
+    adjustabilityScore: SOURCE_ADJUSTABILITY[r.source]?.score ?? 0.5,
+    adjustabilityNote: SOURCE_ADJUSTABILITY[r.source]?.note ?? '',
+  }));
+
+  // ── Stack totals ──────────────────────────────────────────────────────────
+  const nomGap = rows.reduce((s, r) => s + r.centeredNom, 0);
+  const wcTol  = rows.reduce((s, r) => s + r.centeredTol, 0);
+  const rssTol = computeRss(rows.map((r) => r.centeredTol));
+
+  const wcCurrentlyPasses = checkPass(nomGap, wcTol, target);
+
+  // ── Needed shift ──────────────────────────────────────────────────────────
+  const neededGapShift = computeNeededGapShift(nomGap, wcTol, target);
+
+  // ── Adjustable rows (unlocked, score > 0.05) ─────────────────────────────
+  const adjustable = rows.filter(
+    (r) => !lockedIds.has(r.id) && (SOURCE_ADJUSTABILITY[r.source]?.score ?? 0) > 0.05,
+  );
+
+  const strategies: NominalStrategy[] = [];
+  const EPS2 = 1e-9;
+
+  if (Math.abs(neededGapShift) > EPS2 && adjustable.length > 0) {
+
+    // ── Strategy 1: Closing Link ───────────────────────────────────────────
+    {
+      // Sort: highest adjustability score first; break ties by larger nominal
+      // (a larger part can absorb the same absolute delta at a smaller %)
+      const sorted = [...adjustable].sort((a, b) => {
+        const ds = b.adjustabilityScore - a.adjustabilityScore;
+        if (Math.abs(ds) > 0.01) return ds;
+        return Math.abs(b.nominal) - Math.abs(a.nominal);
+      });
+      const link = sorted[0]!;
+
+      const change = buildNominalChange(
+        link,
+        neededGapShift,
+        `Closing link — ${link.adjustabilityNote}`,
+      );
+
+      const newNomGap = nomGap + neededGapShift;
+      strategies.push({
+        id: 'closing-link',
+        label: 'Closing Link (Single Dimension)',
+        description:
+          'Assign the entire gap correction to the most adjustable dimension — the "closing link" ' +
+          'of the tolerance chain. One drawing change; all tolerances stay identical. ' +
+          'This is the preferred GD&T approach when a dedicated adjusting feature exists.',
+        recommended: false,
+        feasible: true,
+        newNominalGap: newNomGap,
+        currentWcTol: wcTol,
+        wcPassAfter: checkPass(newNomGap, wcTol, target),
+        rssPassAfter: checkPass(newNomGap, rssTol, target),
+        changes: [change],
+      });
+    }
+
+    // ── Strategy 2: Equal Distribution ────────────────────────────────────
+    if (adjustable.length >= 1) {
+      const sharePerRow = neededGapShift / adjustable.length;
+      const changes = adjustable.map((r) =>
+        buildNominalChange(
+          r,
+          sharePerRow,
+          `Equal share — ${adjustable.length} dimensions × ${sharePerRow.toFixed(4)} mm gap shift`,
+        ),
+      );
+      const newNomGap = nomGap + neededGapShift;
+      strategies.push({
+        id: 'equal-split',
+        label: 'Equal Distribution',
+        description:
+          `Split the required gap shift equally across all ${adjustable.length} adjustable ` +
+          `dimensions. Each part changes by the same absolute gap contribution. Minimises ` +
+          `the largest single-part change; requires ${adjustable.length} drawing revision${adjustable.length > 1 ? 's' : ''}.`,
+        recommended: false,
+        feasible: true,
+        newNominalGap: newNomGap,
+        currentWcTol: wcTol,
+        wcPassAfter: checkPass(newNomGap, wcTol, target),
+        rssPassAfter: checkPass(newNomGap, rssTol, target),
+        changes,
+      });
+    }
+
+    // ── Strategy 3: Flexibility-Weighted ──────────────────────────────────
+    if (adjustable.length > 1) {
+      const totalScore = adjustable.reduce((s, r) => s + r.adjustabilityScore, 0);
+      const changes = adjustable.map((r) => {
+        const share = (r.adjustabilityScore / totalScore) * neededGapShift;
+        return buildNominalChange(
+          r,
+          share,
+          `${adjustabilityStars(r.adjustabilityScore)} ${(r.adjustabilityScore * 100).toFixed(0)}% adjustability weight`,
+        );
+      });
+      const newNomGap = nomGap + neededGapShift;
+      strategies.push({
+        id: 'weighted-adjustability',
+        label: 'Flexibility-Weighted',
+        description:
+          'Distribute the gap shift proportionally to each dimension\'s manufacturing adjustability. ' +
+          'Assembly gaps and CNC features absorb more of the correction; cast or moulded ' +
+          'parts are asked to change less. Minimises total cost of redesign.',
+        recommended: false,
+        feasible: true,
+        newNominalGap: newNomGap,
+        currentWcTol: wcTol,
+        wcPassAfter: checkPass(newNomGap, wcTol, target),
+        rssPassAfter: checkPass(newNomGap, rssTol, target),
+        changes,
+      });
+    }
+  }
+
+  // ── Recommend the closing-link when failing (least disruption) ────────────
+  if (!wcCurrentlyPasses) {
+    const rec = strategies.find((s) => s.id === 'closing-link' && s.feasible);
+    if (rec) rec.recommended = true;
+  }
+
+  return {
+    nominalGap: nomGap,
+    currentWcTol: wcTol,
+    currentRssTol: rssTol,
+    neededGapShift,
+    wcCurrentlyPasses,
+    rows,
+    strategies,
+  };
+}

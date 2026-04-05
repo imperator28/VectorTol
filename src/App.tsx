@@ -2,6 +2,7 @@ import { useRef, useState, useCallback } from 'react';
 import { StackGrid } from './components/grid/StackGrid';
 import { TargetPanel } from './components/targets/TargetPanel';
 import { GoalSeekPanel } from './components/targets/GoalSeekPanel';
+import { NominalAdvisorPanel } from './components/targets/NominalAdvisorPanel';
 import { ResultsFooter } from './components/summary/ResultsFooter';
 import { Toolbar } from './components/toolbar/Toolbar';
 import { VisualCanvas } from './components/canvas/VisualCanvas';
@@ -108,6 +109,7 @@ export function App() {
         <div className="sidebar" style={{ width: sidebarPx }}>
           <TargetPanel />
           <GoalSeekPanel />
+          <NominalAdvisorPanel />
         </div>
         <div
           className="sidebar-divider"
