@@ -54,6 +54,7 @@ function NominalStrategyCard({
     <div
       className={[
         'na-strategy',
+        open ? 'na-strategy-open' : '',
         strategy.feasible ? 'na-strategy-feasible' : 'na-strategy-infeasible',
         strategy.recommended ? 'na-strategy-recommended' : '',
       ]

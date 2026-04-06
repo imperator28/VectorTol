@@ -63,6 +63,7 @@ The original implementation plan ended at Phase 4 with the core calculator, canv
 - Tolerance Allocation and Nominal Advisor now keep minimum usable height
 - Status banners remain visible as sticky inline status bars
 - Nominal Advisor auto-opens when Tolerance Allocation detects that nominal dimensions, not tolerance redistribution, are blocking success
+- Wide right-panel layouts can switch Tolerance Allocation and Nominal Advisor into 2-column card arrangements without squeezing expanded detail states
 
 ### 5.5 Canvas, grid, and workflow consistency
 
@@ -79,6 +80,17 @@ The original implementation plan ended at Phase 4 with the core calculator, canv
 - Fixed tooltip persistence so multiple description bubbles no longer remain stuck on screen
 - Restored descriptions for key canvas controls including Lock, Snap, and Flip All
 - Improved demo artwork so tutorial labels no longer overlap
+
+### 5.7 Numerical correctness, validation, and release readiness
+
+- Fixed edge-case floating-point comparisons so exact-boundary pass cases no longer show contradictory fail states between Analysis Results, Tolerance Allocation, and Nominal Advisor
+- Added regression tests for typical GD&T scenarios including clearance, flush, interference, proud, recess, and exact-boundary cases
+- Completed a broader manual validation pass covering tutorial flow, save/export review, autosave controls, undo/redo, Monte Carlo, RSS modal expansion, and design-intent switching
+- Refreshed the app icon assets using the latest vector caliper artwork for browser and desktop packaging
+- Generated the missing Windows `.ico` resource and completed a Windows `x86_64` executable cross-build from macOS
+- Produced signed-skipped macOS desktop bundles for local distribution:
+  - `.app`
+  - `.dmg`
 
 ---
 
@@ -97,12 +109,18 @@ The original implementation plan ended at Phase 4 with the core calculator, canv
 | `src/store/projectStore.ts` | Grid/canvas direction sync |
 | `src/components/summary/ResultsFooter.tsx` | Compact 2×3 analysis card layout |
 | `src/components/summary/MonteCarloPanel.tsx` | Compact Monte Carlo card mode |
+| `src/engine/standards.ts` | Boundary-safe standards validation and advisor agreement |
+| `tests/engine/standards.test.ts` | Regression coverage for representative GD&T scenarios |
+| `public/app-icon.svg` | Current vector app icon source |
+| `src-tauri/icons/icon.ico` | Windows resource icon for cross-builds and native packaging |
 
 ---
 
 ## Verification
 
 - [x] `npx tsc --noEmit`
+- [x] `npm test`
+- [x] `npm run build`
 - [x] Manual UI validation of tutorial flow
 - [x] Manual validation of save review modal and editable metadata
 - [x] Manual validation of autosave recovery prompt
@@ -110,3 +128,7 @@ The original implementation plan ended at Phase 4 with the core calculator, canv
 - [x] Manual validation of sticky status banners in advisor panels
 - [x] Manual validation of key canvas hover descriptions
 - [x] Manual validation that grid direction toggles stay in sync with canvas arrows
+- [x] Manual validation of Monte Carlo and RSS compact/expanded flows
+- [x] Scenario-matrix validation for clearance, flush, interference, proud, recess, and exact-boundary cases
+- [x] macOS `.app` and `.dmg` build generation
+- [x] Windows `x86_64` executable cross-build generation

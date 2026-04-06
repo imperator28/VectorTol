@@ -6,6 +6,15 @@ VectorTol replaces brittle Excel spreadsheets and expensive cloud tools with a f
 
 ---
 
+## Download
+
+| Platform | File | Notes |
+|---|---|---|
+| **macOS** (Apple Silicon) | [`VectorTol_0.1.0_aarch64.dmg`](https://github.com/imperator28/VectorTol/releases/latest) | Drag to Applications, right-click → Open on first launch |
+| **Windows** (x64) | [`VectorTol_0.1.0_x64.exe`](https://github.com/imperator28/VectorTol/releases/latest) | Run installer, approve SmartScreen if prompted |
+
+---
+
 ## Why engineers choose VectorTol
 
 | Pain point | VectorTol solution |
@@ -15,30 +24,6 @@ VectorTol replaces brittle Excel spreadsheets and expensive cloud tools with a f
 | Cloud tools rejected by IP security policy | Fully offline, zero telemetry, no server connection |
 | Hard to share or standardize | Single `.vtol` file contains everything — canvas, data, settings |
 | Tolerances pass on paper but fail in production | Yield % and failure rate (ppm) from RSS and Monte Carlo |
-
----
-
-## Implementation status
-
-The original delivery plan covered four phases: portable calculator, visual canvas, reporting/export, and smart analysis. Those phases are now complete, and the app has been extended with a Phase 5 polish and reliability pass.
-
-| Phase | Status | Delivered outcome |
-|---|---|---|
-| Phase 1 | Complete | Offline calculator, AG Grid stack-up editor, WC/RSS engine, `.vtol` save/load |
-| Phase 2 | Complete | Visual canvas, image import, bi-directional row/vector sync, undo/redo |
-| Phase 3 | Complete | PDF/XLSX/CSV export, editable metadata, direction lock, endpoint snap |
-| Phase 4 | Complete | ISO 286 tolerance standards, Tolerance Allocation, Nominal Advisor, themes |
-| Phase 5 | Complete | Tutorial onboarding, save-review modal, autosave/recovery, snapped insights layout, design-intent cards, workflow bug fixes |
-
-## What shipped beyond the original plan
-
-- Design Intent moved from a basic selector to a visual 6-card picker with per-intent guidance.
-- A guided tutorial now walks first-time users through the canvas, grid, design intent, and analysis flow with demo artwork.
-- Save and export actions now pause for metadata review and editing before writing files.
-- Auto-save and recovery drafts protect work between manual saves.
-- The analysis panel now snaps cleanly to 1-row, 2-row, or 3-row card layouts instead of resizing arbitrarily.
-- The right-side advisor panels react intelligently to drill-down workflows, including auto-opening Nominal Advisor when tolerances alone cannot solve the gap.
-- Recent bug fixes improved tooltip behavior, tutorial targeting, canvas/grid direction sync, row index visibility, and compact-card plot layout.
 
 ---
 
@@ -61,13 +46,13 @@ The original delivery plan covered four phases: portable calculator, visual canv
 ## Feature overview
 
 ### Visual Stack-up Canvas
-- Import a cross-section drawing or photo as background (PNG/JPG)
+- Import a cross-section drawing or photo as background (PNG/JPG) — drag-and-drop or via toolbar
 - **Draw tolerance vectors** (arrows) directly on the image with click-drag
 - Each arrow auto-detects direction: Right/Up = +1, Left/Down = −1
 - Bi-directional sync: drawing an arrow creates a grid row; deleting either removes both
 - Pan and zoom (scroll wheel + middle mouse drag — CAD-style controls)
 - Color-code vectors by part; adjust line width per vector
-- Auto-fit imported or tutorial demo images to the canvas
+- Auto-fit imported images to the canvas viewport
 - Undo/redo with 50-step history
 
 ### Precision Analysis Grid
@@ -107,10 +92,12 @@ The original delivery plan covered four phases: portable calculator, visual canv
 ### Professional UI
 - Three themes: Light, Dark, and Swiss International (high-contrast)
 - Resizable panels — workspace (canvas + grid) left, all results and insights right
+- **macOS native menu bar** — File, Edit, View menus integrated with all project operations
+- **Unified macOS title bar** — traffic lights sit inside the toolbar row (no separate title bar band)
 - Snapped analysis-results resizing and smarter advisor focus states
 - Design Intent card picker with hover guidance
 - Rich tooltip descriptions on key controls
-- Interactive tutorial for new users (auto-starts on first launch, re-launchable via ? button)
+- Interactive tutorial for new users (auto-starts on first launch, re-launchable via `?` button)
 - Full keyboard shortcut set for efficient operation
 
 ---
@@ -128,13 +115,16 @@ The original delivery plan covered four phases: portable calculator, visual canv
 | Scroll wheel | Zoom in / out |
 | `Delete` / `Backspace` | Remove selected vector + row |
 | `Escape` | Cancel draw / deselect |
-| `Ctrl+Z` | Undo |
+| `Cmd+N` / `Ctrl+N` | New project |
+| `Cmd+O` / `Ctrl+O` | Open project |
+| `Cmd+S` / `Ctrl+S` | Save project |
+| `Ctrl+Z` / `Cmd+Z` | Undo |
 | `Ctrl+Y` / `Ctrl+Shift+Z` | Redo |
 | `?` | Open keyboard shortcuts reference |
 
 ---
 
-## Getting started
+## Getting started (from source)
 
 ### Prerequisites
 - [Node.js](https://nodejs.org/) >= 18
@@ -155,7 +145,28 @@ npm run dev
 ```bash
 npm run tauri build
 ```
-Produces a portable `.exe` (Windows) or `.dmg` (macOS) in `src-tauri/target/release/bundle/`.
+Produces native bundles for the current host OS in `src-tauri/target/release/bundle/`.
+
+### Windows cross-build from macOS
+```bash
+rustup target add x86_64-pc-windows-msvc
+cargo install cargo-xwin
+npm run tauri build -- --target x86_64-pc-windows-msvc -- -- --runner cargo-xwin
+```
+Output: `src-tauri/target/x86_64-pc-windows-msvc/release/vectortol.exe`
+
+---
+
+## Implementation status
+
+| Phase | Status | Delivered outcome |
+|---|---|---|
+| Phase 1 | ✅ Complete | Offline calculator, AG Grid stack-up editor, WC/RSS engine, `.vtol` save/load |
+| Phase 2 | ✅ Complete | Visual canvas, image import, bi-directional row/vector sync, undo/redo |
+| Phase 3 | ✅ Complete | PDF/XLSX/CSV export, editable metadata, direction lock, endpoint snap |
+| Phase 4 | ✅ Complete | ISO 286 tolerance standards, Tolerance Allocation, Nominal Advisor, themes |
+| Phase 5 | ✅ Complete | Tutorial onboarding, save-review modal, autosave/recovery, snapped insights layout |
+| Phase 6 | ✅ Complete | macOS native menu bar, unified title bar, canvas image rendering fix, drag-and-drop fix |
 
 ---
 
@@ -167,7 +178,6 @@ Projects save as `.vtol` files — self-contained JSON including:
 - Background image (base64-embedded — no external dependencies)
 - Design intent settings
 - Project name and author
-- Save-review metadata edits and recovery-draft state compatibility
 
 Files saved in any version of VectorTol load correctly in later versions.
 
@@ -178,7 +188,7 @@ Files saved in any version of VectorTol load correctly in later versions.
 - **Fully offline** — strict Content Security Policy blocks all external network requests
 - **Zero telemetry** — no analytics, no crash reporting, no server communication ever
 - **Local-only** — all data stays on the engineer's machine; safe for proprietary designs
-- **No installer** — portable executable runs directly in user-space
+- **Native desktop bundles** — packaged as host-platform desktop artifacts with no cloud dependency
 
 ---
 

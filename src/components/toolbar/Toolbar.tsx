@@ -54,6 +54,8 @@ export function Toolbar() {
   const derivedRows = useProjectStore((s) => s.derivedRows);
   const addRow = useProjectStore((s) => s.addRow);
   const removeRow = useProjectStore((s) => s.removeRow);
+  const undo = useProjectStore((s) => s.undo);
+  const redo = useProjectStore((s) => s.redo);
   const loadProject = useProjectStore((s) => s.loadProject);
   const newProject = useProjectStore((s) => s.newProject);
   const markClean = useProjectStore((s) => s.markClean);
@@ -69,6 +71,30 @@ export function Toolbar() {
   const setAutosaveEnabled = useSettingsStore((s) => s.setAutosaveEnabled);
   const setAutosaveIntervalMinutes = useSettingsStore((s) => s.setAutosaveIntervalMinutes);
   const [pendingAction, setPendingAction] = useState<FileAction | null>(null);
+  const canUseNativeWindowDrag =
+    isTauri &&
+    typeof navigator !== 'undefined' &&
+    navigator.userAgent.includes('Macintosh');
+
+  const handleToolbarDragPointerDown = useCallback(async (event: React.PointerEvent<HTMLElement>) => {
+    if (!canUseNativeWindowDrag || event.button !== 0) return;
+
+    const target = event.target as HTMLElement | null;
+    if (!target) return;
+
+    if (target.closest('button, input, select, textarea, label, a, [role="button"]')) {
+      return;
+    }
+
+    event.preventDefault();
+
+    try {
+      const { getCurrentWindow } = await import('@tauri-apps/api/window');
+      await getCurrentWindow().startDragging();
+    } catch (error) {
+      console.warn('Window drag failed.', error);
+    }
+  }, [canUseNativeWindowDrag]);
 
   const handleNew = useCallback(() => {
     if (isDirty && !window.confirm('Unsaved changes will be lost. Continue?')) return;
@@ -216,6 +242,37 @@ export function Toolbar() {
     return () => window.clearInterval(timer);
   }, [autosaveEnabled, autosaveIntervalMinutes, isDirty, runAutosave]);
 
+  // ── Native menu-bar event listener (Tauri / macOS) ─────────────────────────
+  useEffect(() => {
+    if (!isTauri) return;
+    let unlisten: (() => void) | undefined;
+    void import('@tauri-apps/api/event').then(({ listen }) => {
+      void listen<string>('menu-action', (event) => {
+        switch (event.payload) {
+          case 'new':          handleNew(); break;
+          case 'open':         void handleOpen(); break;
+          case 'save':         setPendingAction('project'); break;
+          case 'export-pdf':   setPendingAction('pdf'); break;
+          case 'export-xlsx':  setPendingAction('xlsx'); break;
+          case 'export-csv':   setPendingAction('csv'); break;
+          case 'undo':         undo(); break;
+          case 'redo':         redo(); break;
+          case 'add-row':      addRow(); break;
+          case 'delete-row':   if (selectedRowId) removeRow(selectedRowId); break;
+          case 'toggle-theme': toggleTheme(); break;
+          case 'tutorial':     startTutorial(); break;
+          case 'shortcuts':    setShortcutsOpen(true); break;
+        }
+      }).then((fn) => { unlisten = fn; });
+    });
+    return () => { unlisten?.(); };
+  }, [
+    handleNew, handleOpen,
+    undo, redo,
+    addRow, removeRow, selectedRowId,
+    toggleTheme, startTutorial, setShortcutsOpen,
+  ]);
+
   const confirmPendingAction = useCallback(async (reviewValues: FileActionReviewValues) => {
     const action = pendingAction;
     setPendingAction(null);
@@ -272,7 +329,7 @@ export function Toolbar() {
 
   return (
     <>
-      <div className="toolbar" data-tour="toolbar">
+      <div className="toolbar" data-tour="toolbar" data-tauri-drag-region>
         <div className="toolbar-group">
           <Tooltip content="Create a blank project. Unsaved changes will be lost." placement="bottom">
             <button onClick={handleNew}>
@@ -319,6 +376,17 @@ export function Toolbar() {
             </button>
           </Tooltip>
         </div>
+
+        {/* Wide empty zone — drag region on macOS, flex spacer everywhere */}
+        {/* data-tauri-drag-region on this empty div is the window drag handle.
+            Tauri's JS skips dragging when cursor is over button/input/a/etc. */}
+        <div
+          className="toolbar-drag-spacer"
+          data-tauri-drag-region
+          aria-hidden="true"
+          onPointerDown={handleToolbarDragPointerDown}
+        />
+
         <div className="toolbar-meta">
           <input
             className="toolbar-meta-input"

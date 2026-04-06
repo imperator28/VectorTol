@@ -158,6 +158,15 @@ export function App() {
   const loadProject = useProjectStore((s) => s.loadProject);
   const [recoveryChecked, setRecoveryChecked] = useState(false);
   const [restoredDraft, setRestoredDraft] = useState(false);
+
+  // Stamp platform class so CSS can target the macOS overlay title bar
+  useEffect(() => {
+    const inTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
+    if (inTauri && navigator.userAgent.includes('Macintosh')) {
+      document.documentElement.classList.add('platform-macos');
+    }
+  }, []);
+
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', themeMode);
   }, [themeMode]);
@@ -249,6 +258,7 @@ export function App() {
     MIN_RESULTS_PX,
     MAX_RESULTS_PX,
   );
+  const hasHiddenResultsSnapHeights = resultsSnapHeights.some((height) => height > resultsResizeMaxPx + 1);
   const effectiveResultsSnapHeights = resultsSnapHeights.filter((height) => height <= resultsResizeMaxPx + 1);
   const boundedResultsPx = resultsCollapsed
     ? RP_HEADER_PX
@@ -295,6 +305,17 @@ export function App() {
     );
   const allocationFocused = focusedInsightsSection === 'alloc' && !allocCollapsed;
   const advisorFocused = focusedInsightsSection === 'advisor' && !advisorCollapsed;
+
+  const focusResultsPanel = useCallback((desiredHeight?: number) => {
+    setFocusedInsightsSection(null);
+    setAllocCollapsed(true);
+    setAdvisorCollapsed(true);
+
+    if (desiredHeight === undefined) return;
+
+    const nextDesired = clamp(desiredHeight, MIN_RESULTS_PX, resultsContentMaxPx);
+    setResultsPx(resultsSnapHeights.length > 0 ? snapToNearest(nextDesired, resultsSnapHeights) : nextDesired);
+  }, [resultsContentMaxPx, resultsSnapHeights]);
 
   useEffect(() => {
     if (!resultsCollapsed) {
@@ -347,13 +368,19 @@ export function App() {
     const startY = e.clientY; const startH = resultsPx;
     function onMove(ev: MouseEvent) {
       if (!draggingResults.current) return;
-      const desired = clamp(startH + (ev.clientY - startY), MIN_RESULTS_PX, resultsResizeMaxPx);
+      const rawDesired = startH + (ev.clientY - startY);
+      if (rawDesired > resultsResizeMaxPx + 12 && hasHiddenResultsSnapHeights) {
+        focusResultsPanel(rawDesired);
+        return;
+      }
+
+      const desired = clamp(rawDesired, MIN_RESULTS_PX, resultsResizeMaxPx);
       setResultsPx(effectiveResultsSnapHeights.length > 0 ? snapToNearest(desired, effectiveResultsSnapHeights) : desired);
     }
     function onUp() { draggingResults.current = false; window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); }
     window.addEventListener('mousemove', onMove);
     window.addEventListener('mouseup', onUp);
-  }, [effectiveResultsSnapHeights, resultsPx, resultsResizeMaxPx]);
+  }, [effectiveResultsSnapHeights, focusResultsPanel, hasHiddenResultsSnapHeights, resultsPx, resultsResizeMaxPx]);
 
   const startAllocResize = useCallback((e: React.MouseEvent) => {
     if (allocCollapsed) return;

@@ -65,6 +65,7 @@ function StrategyCard({
     <div
       className={[
         'gs-strategy',
+        open ? 'gs-strategy-open' : '',
         strategy.feasible ? 'gs-strategy-feasible' : 'gs-strategy-infeasible',
         strategy.recommended ? 'gs-strategy-recommended' : '',
       ]

@@ -1,7 +1,7 @@
 {
   "productName": "VectorTol",
   "version": "0.1.0",
-  "identifier": "com.vectortol.app",
+  "identifier": "com.vectortol",
   "build": {
     "frontendDist": "../dist",
     "devUrl": "http://localhost:1420",
@@ -11,21 +11,26 @@
   "app": {
     "windows": [
       {
-        "title": "VectorTol - Tolerance Stack-Up Analysis",
+        "title": "VectorTol",
         "width": 1280,
         "height": 800,
         "resizable": true,
-        "fullscreen": false
+        "fullscreen": false,
+        "dragDropEnabled": false,
+        "titleBarStyle": "Overlay",
+        "hiddenTitle": true
       }
     ],
     "security": {
-      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'"
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:"
     }
   },
-  "plugins": {
-    "dialog": {},
-    "fs": {
-      "scope": ["**"]
-    }
+  "bundle": {
+    "active": true,
+    "icon": [
+      "icons/icon.png",
+      "icons/icon.ico",
+      "icons/icon.icns"
+    ]
   }
 }

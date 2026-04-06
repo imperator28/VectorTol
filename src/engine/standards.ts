@@ -336,19 +336,27 @@ function computeRss(tols: number[]): number {
   return Math.sqrt(tols.reduce((s, t) => s + t * t, 0));
 }
 
+const COMPARISON_EPS = 1e-9;
+
+function normalizeNearZero(value: number): number {
+  return Math.abs(value) <= COMPARISON_EPS ? 0 : value;
+}
+
 /** Replicate the projectStore pass check against wcMin/wcMax */
 function checkPass(nomGap: number, tol: number, target: TargetScenario): boolean {
   const lo = target.minGap !== null ? parseFloat(target.minGap) : null;
   const hi = target.maxGap !== null ? parseFloat(target.maxGap) : null;
-  const minVal = nomGap - tol;
-  const maxVal = nomGap + tol;
+  const minVal = normalizeNearZero(nomGap - tol);
+  const maxVal = normalizeNearZero(nomGap + tol);
   switch (target.type) {
-    case 'clearance': return lo !== null ? minVal >= lo : true;
-    case 'proud':     return lo !== null ? minVal >= lo : minVal > 0;
-    case 'recess':    return hi !== null ? maxVal <= hi : maxVal < 0;
-    case 'interference': return (lo === null || maxVal <= lo) && (hi === null || minVal >= hi);
+    case 'clearance': return lo !== null ? minVal >= lo - COMPARISON_EPS : true;
+    case 'proud':     return lo !== null ? minVal >= lo - COMPARISON_EPS : minVal > -COMPARISON_EPS;
+    case 'recess':    return hi !== null ? maxVal <= hi + COMPARISON_EPS : maxVal < COMPARISON_EPS;
+    case 'interference':
+      return (lo === null || maxVal <= lo + COMPARISON_EPS) && (hi === null || minVal >= hi - COMPARISON_EPS);
     case 'flush':
-    case 'custom':    return (lo === null || minVal >= lo) && (hi === null || maxVal <= hi);
+    case 'custom':
+      return (lo === null || minVal >= lo - COMPARISON_EPS) && (hi === null || maxVal <= hi + COMPARISON_EPS);
   }
 }
 
@@ -433,10 +441,10 @@ export function runSmartAllocation(
   const rssCurrentlyPasses = checkPass(nomGap, rssTol, target);
 
   // Does the nominal gap itself already violate the intent? (tolerance can't save it)
-  const nominalGapViolation = wcBudget !== null && wcBudget < 0;
+  const nominalGapViolation = wcBudget !== null && wcBudget < -COMPARISON_EPS;
 
   const strategies: AllocationStrategy[] = [];
-  const EPS = 1e-9;
+  const EPS = COMPARISON_EPS;
 
   // ── Helper: build RowChange list for a proposed tolerance array ───────────
   function buildChanges(
@@ -933,26 +941,26 @@ function computeNeededGapShift(
     case 'clearance':
     case 'proud':
       // Need wcMin = (nomGap + shift) − wcTol ≥ lo
-      return lo !== null ? lo + wcTol - nomGap : 0;
+      return normalizeNearZero(lo !== null ? lo + wcTol - nomGap : 0);
 
     case 'recess':
       // Need wcMax = (nomGap + shift) + wcTol ≤ hi
-      return hi !== null ? hi - wcTol - nomGap : 0;
+      return normalizeNearZero(hi !== null ? hi - wcTol - nomGap : 0);
 
     case 'interference':
       // Need wcMax ≤ lo AND wcMin ≥ hi
       // Feasible gap: [hi + wcTol, lo − wcTol]; centre = (lo + hi) / 2
-      if (lo !== null && hi !== null) return (lo + hi) / 2 - nomGap;
-      if (lo !== null) return lo - wcTol - nomGap;
-      if (hi !== null) return hi + wcTol - nomGap;
+      if (lo !== null && hi !== null) return normalizeNearZero((lo + hi) / 2 - nomGap);
+      if (lo !== null) return normalizeNearZero(lo - wcTol - nomGap);
+      if (hi !== null) return normalizeNearZero(hi + wcTol - nomGap);
       return 0;
 
     case 'flush':
     case 'custom':
       // Need wcMin ≥ lo AND wcMax ≤ hi; centre at (lo + hi) / 2
-      if (lo !== null && hi !== null) return (lo + hi) / 2 - nomGap;
-      if (lo !== null) return lo + wcTol - nomGap;
-      if (hi !== null) return hi - wcTol - nomGap;
+      if (lo !== null && hi !== null) return normalizeNearZero((lo + hi) / 2 - nomGap);
+      if (lo !== null) return normalizeNearZero(lo + wcTol - nomGap);
+      if (hi !== null) return normalizeNearZero(hi - wcTol - nomGap);
       return 0;
   }
 }
@@ -1045,7 +1053,7 @@ export function runNominalAdvisor(
   );
 
   const strategies: NominalStrategy[] = [];
-  const EPS2 = 1e-9;
+  const EPS2 = COMPARISON_EPS;
 
   if (Math.abs(neededGapShift) > EPS2 && adjustable.length > 0) {
 

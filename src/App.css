@@ -46,6 +46,25 @@ textarea {
   z-index: 10;
 }
 
+/* ── macOS overlay title bar integration ────────────────────────────────────── */
+/* titleBarStyle:"Overlay" → traffic lights float over web content.             */
+/* data-tauri-drag-region (attribute, not CSS) is set on the toolbar div;       */
+/* Tauri's injected JS skips dragging whenever cursor is over button/input/etc. */
+.platform-macos .toolbar {
+  /* 80 px clears: close(13) + gap + minimize(32) + gap + fullscreen(51) + margin */
+  padding-left: 80px;
+  -webkit-app-region: drag;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Keep the drag-spacer as a visible flex-spacer inside the draggable toolbar */
+.toolbar-drag-spacer {
+  flex: 1;
+  min-width: 0;
+  align-self: stretch;
+}
+
 .toolbar-group {
   display: flex;
   gap: 3px;
@@ -85,13 +104,44 @@ textarea {
   background: var(--bg-active);
 }
 
+.toolbar-drag-spacer {
+  /* Pushes .toolbar-meta to the right, replacing margin-left:auto */
+  flex: 1;
+  min-width: 20px;
+  align-self: stretch;
+}
+
+/* On macOS the spacer becomes the primary window drag handle */
+.platform-macos .toolbar-drag-spacer {
+  -webkit-app-region: drag;
+  cursor: grab;
+}
+
+.platform-macos .toolbar-drag-spacer:active {
+  cursor: grabbing;
+}
+
+.platform-macos .toolbar button,
+.platform-macos .toolbar input,
+.platform-macos .toolbar select,
+.platform-macos .toolbar textarea,
+.platform-macos .toolbar label {
+  -webkit-app-region: no-drag;
+}
+
+.platform-macos .toolbar input,
+.platform-macos .toolbar textarea {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
 .toolbar-meta {
   margin-left: auto;
   display: flex;
   align-items: center;
   gap: 6px;
-  flex-wrap: wrap;
-  justify-content: flex-end;
+  flex-shrink: 0;
+  flex-wrap: nowrap;   /* prevent internal wrapping that caused the two-row bug */
 }
 
 .toolbar-meta-input {
@@ -407,7 +457,7 @@ textarea {
   overflow: hidden;
   background: var(--bg-app);
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: center;
 }
 
@@ -736,6 +786,7 @@ textarea {
   height: auto;
   min-height: 100%;
   box-sizing: border-box;
+  container-type: inline-size;
 }
 
 .results-cards {
@@ -1289,6 +1340,7 @@ textarea {
   margin-top: 16px;
   padding-top: 14px;
   border-top: 1px solid var(--border-primary);
+  container-type: inline-size;
 }
 
 .goalseek-panel h3 {
@@ -1573,6 +1625,7 @@ textarea {
   border-top: 1px solid var(--border-primary);
   overflow-y: auto;
   margin-top: 16px;
+  container-type: inline-size;
 }
 
 .nominal-advisor-panel h3 {
@@ -1856,6 +1909,25 @@ textarea {
   color: var(--text-tertiary);
   line-height: 1.5;
   margin: 0 0 8px;
+}
+
+@container (min-width: 560px) {
+  .results-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .gs-strategies,
+  .na-strategies {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    align-items: start;
+  }
+
+  .gs-strategy-open,
+  .na-strategy-open {
+    grid-column: 1 / -1;
+  }
 }
 
 .na-change-table {
