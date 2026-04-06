@@ -205,5 +205,5 @@ export async function exportPdf(
     );
   }
 
-  doc.save(`${metadata.projectName}_report.pdf`);
+  doc.save(`${metadata.projectName || 'Untitled'}_report.pdf`);
 }

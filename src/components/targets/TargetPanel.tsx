@@ -1,15 +1,55 @@
 import { useCallback, useState } from 'react';
 import { useProjectStore } from '../../store/projectStore';
 import type { TargetType, TargetScenario } from '../../types/project';
+import { Tooltip } from '../ui/Tooltip';
 
-const TARGET_TYPES: { value: TargetType; label: string; description: string }[] = [
-  { value: 'clearance', label: 'Clearance', description: 'Gap must be ≥ min' },
-  { value: 'interference', label: 'Interference', description: 'Gap between bounds (negative)' },
-  { value: 'flush', label: 'Flush', description: 'Gap ≈ 0 ± tolerance' },
-  { value: 'proud', label: 'Proud', description: 'Gap > 0 (positive step)' },
-  { value: 'recess', label: 'Recess', description: 'Gap < 0 (negative step)' },
-  { value: 'custom', label: 'Custom', description: 'User-defined upper and lower bounds' },
+const TARGET_TYPES: { value: TargetType; label: string; description: string; detail: string }[] = [
+  {
+    value: 'clearance',
+    label: 'Clearance',
+    description: 'Keep a positive minimum gap.',
+    detail: 'Use this when two features must never touch. The worst-case stack-up needs to stay at or above your minimum open gap.',
+  },
+  {
+    value: 'interference',
+    label: 'Interference',
+    description: 'Hold a controlled press fit window.',
+    detail: 'Use this for intentional overlap or crush. Set the acceptable lower and upper limits for the fit you want to maintain.',
+  },
+  {
+    value: 'flush',
+    label: 'Flush',
+    description: 'Center both surfaces around zero.',
+    detail: 'Use this when two faces should land flush within a symmetric tolerance band, like 0 ± 0.05 mm.',
+  },
+  {
+    value: 'proud',
+    label: 'Proud',
+    description: 'Feature must stand above the reference.',
+    detail: 'Use this for positive reveal or step height. The stack-up must stay above your minimum proud amount.',
+  },
+  {
+    value: 'recess',
+    label: 'Recess',
+    description: 'Feature must stay below the reference.',
+    detail: 'Use this for countersink, setback, or inset conditions. The stack-up must not rise above your recess limit.',
+  },
+  {
+    value: 'custom',
+    label: 'Custom',
+    description: 'Define both lower and upper bounds.',
+    detail: 'Use this when the acceptance window does not fit the standard intent patterns. Enter the exact lower and upper limits manually.',
+  },
 ];
+
+const TARGET_DEFAULTS: Record<TargetType, Partial<TargetScenario>> = {
+  clearance: { minGap: '0', maxGap: null },
+  interference: { minGap: '0', maxGap: '-0.01' },
+  flush: { minGap: '-0.05', maxGap: '0.05' },
+  proud: { minGap: '0.10', maxGap: null },
+  recess: { minGap: null, maxGap: '-0.10' },
+  custom: { minGap: '-0.10', maxGap: '0.10' },
+};
 
 /** Which gap fields each target type needs */
 type FieldConfig = { kind: 'min' } | { kind: 'max' } | { kind: 'min+max' } | { kind: 'flush' } | { kind: 'custom' } | { kind: 'none' };
@@ -30,6 +70,60 @@ function getFlushTol(target: TargetScenario): string {
   return '';
 }
 
+function DesignIntentIcon({ type }: { type: TargetType }) {
+  switch (type) {
+    case 'clearance':
+      return (
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <rect x="3" y="5.5" width="5" height="13" rx="1.5" />
+          <rect x="16" y="5.5" width="5" height="13" rx="1.5" />
+          <path d="M10 12h4M10 12l1.6-1.6M10 12l1.6 1.6M14 12l-1.6-1.6M14 12l-1.6 1.6" />
+        </svg>
+      );
+    case 'interference':
+      return (
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <rect x="3" y="5.5" width="8" height="13" rx="1.5" />
+          <rect x="13" y="5.5" width="8" height="13" rx="1.5" />
+          <path d="M8.5 12h7M10.5 10.4L8.9 12l1.6 1.6M13.5 10.4L15.1 12l-1.6 1.6" />
+        </svg>
+      );
+    case 'flush':
+      return (
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <rect x="3" y="6" width="7" height="12" rx="1.5" />
+          <rect x="14" y="6" width="7" height="12" rx="1.5" />
+          <path d="M12 4.5v15M10 9.5h4M10 14.5h4" />
+        </svg>
+      );
+    case 'proud':
+      return (
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4 18V8h7v10" />
+          <path d="M13 18V5h7v13" />
+          <path d="M11 9h2M13 9l-1.2-1.2M13 9l-1.2 1.2" />
+        </svg>
+      );
+    case 'recess':
+      return (
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4 18V5h7v13" />
+          <path d="M13 18V8h7v10" />
+          <path d="M11 9h2M11 9l1.2-1.2M11 9l1.2 1.2" />
+        </svg>
+      );
+    case 'custom':
+      return (
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M5 5v14M5 5h3M5 19h3M19 5v14M16 5h3M16 19h3" />
+          <path d="M9 9h6M9 15h4" />
+          <circle cx="15" cy="9" r="1.2" fill="currentColor" stroke="none" />
+          <circle cx="13" cy="15" r="1.2" fill="currentColor" stroke="none" />
+        </svg>
+      );
+  }
+}
+
 export function TargetPanel() {
   const target = useProjectStore((s) => s.target);
   const setTarget = useProjectStore((s) => s.setTarget);
@@ -40,18 +134,9 @@ export function TargetPanel() {
   const [flushRaw, setFlushRaw] = useState<string | null>(null);
 
   const handleTypeChange = useCallback(
-    (e: React.ChangeEvent<HTMLSelectElement>) => {
-      const type = e.target.value as TargetType;
-      const defaults: Record<TargetType, Partial<TargetScenario>> = {
-        clearance: { minGap: '0', maxGap: null },
-        interference: { minGap: '0', maxGap: '-0.01' },
-        flush: { minGap: '-0.05', maxGap: '0.05' },
-        proud: { minGap: '0.10', maxGap: null },
-        recess: { minGap: null, maxGap: '-0.10' },
-        custom: { minGap: '-0.10', maxGap: '0.10' },
-      };
+    (type: TargetType) => {
       setFlushRaw(null);
-      setTarget({ type, ...defaults[type] } as TargetScenario);
+      setTarget({ type, ...TARGET_DEFAULTS[type] } as TargetScenario);
     },
     [setTarget],
   );
@@ -97,18 +182,35 @@ export function TargetPanel() {
 
   return (
     <div className="target-panel">
-      <div className="target-fields">
-        <label>
-          Type:
-          <select value={target.type} onChange={handleTypeChange}>
-            {TARGET_TYPES.map((t) => (
-              <option key={t.value} value={t.value} title={t.description}>
-                {t.label}
-              </option>
-            ))}
-          </select>
-        </label>
+      <div className="target-type-grid" role="radiogroup" aria-label="Design intent">
+        {TARGET_TYPES.map((option, index) => {
+          const selected = option.value === target.type;
+          return (
+            <Tooltip
+              key={option.value}
+              content={option.detail}
+              placement={index < 3 ? 'bottom' : 'top'}
+            >
+              <button
+                type="button"
+                className={`target-type-card${selected ? ' is-selected' : ''}`}
+                aria-pressed={selected}
+                onClick={() => handleTypeChange(option.value)}
+              >
+                <span className="target-type-icon" aria-hidden="true">
+                  <DesignIntentIcon type={option.value} />
+                </span>
+                <span className="target-type-copy">
+                  <span className="target-type-label">{option.label}</span>
+                  <span className="target-type-description">{option.description}</span>
+                </span>
+              </button>
+            </Tooltip>
+          );
+        })}
+      </div>
 
+      <div className="target-fields">
         {field.kind === 'min' && (
           <label>
             Min Gap:

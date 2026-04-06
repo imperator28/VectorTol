@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback } from 'react';
+import { useMemo, useState, useCallback, useEffect } from 'react';
 import { useProjectStore } from '../../store/projectStore';
 import { useSettingsStore } from '../../store/settingsStore';
 import { runSmartAllocation } from '../../engine/standards';
@@ -42,15 +42,17 @@ function changeToUpdate(change: RowChange): Partial<StackRow> {
 
 function StrategyCard({
   strategy,
+  open,
+  onToggle,
   onApplyRow,
   onApplyAll,
 }: {
   strategy: AllocationStrategy;
+  open: boolean;
+  onToggle: () => void;
   onApplyRow: (change: RowChange) => void;
   onApplyAll: (strategy: AllocationStrategy) => void;
 }) {
-  const [open, setOpen] = useState(false);
-
   const strategyIcon: Record<AllocationStrategy['id'], string> = {
     proportional: '⚖',
     'top-contributors': '🎯',
@@ -70,7 +72,7 @@ function StrategyCard({
         .join(' ')}
     >
       {/* Header row */}
-      <button className="gs-strategy-header" onClick={() => setOpen((o) => !o)}>
+      <button className="gs-strategy-header" onClick={onToggle}>
         <span className="gs-strategy-icon">{strategyIcon[strategy.id]}</span>
         <span className="gs-strategy-label">
           {strategy.label}
@@ -179,11 +181,18 @@ function StrategyCard({
 
 // ── main panel ────────────────────────────────────────────────────────────────
 
-export function GoalSeekPanel() {
+export function GoalSeekPanel({
+  onDetailOpenChange,
+  onNominalGapViolationChange,
+}: {
+  onDetailOpenChange?: (open: boolean) => void;
+  onNominalGapViolationChange?: (hasViolation: boolean) => void;
+}) {
   const rows      = useProjectStore((s) => s.rows);
   const target    = useProjectStore((s) => s.target);
   const updateRow = useProjectStore((s) => s.updateRow);
   const standards = useSettingsStore((s) => s.config.standards);
+  const [openStrategyId, setOpenStrategyId] = useState<AllocationStrategy['id'] | null>(null);
 
   const seekInput = useMemo(
     () =>
@@ -207,6 +216,12 @@ export function GoalSeekPanel() {
     [seekInput, target, standards],
   );
 
+  useEffect(() => {
+    if (openStrategyId && !result.strategies.some((strategy) => strategy.id === openStrategyId)) {
+      setOpenStrategyId(null);
+    }
+  }, [openStrategyId, result.strategies]);
+
   const handleApplyRow = useCallback(
     (change: RowChange) => {
       updateRow(change.rowId, changeToUpdate(change));
@@ -223,9 +238,17 @@ export function GoalSeekPanel() {
     [updateRow],
   );
 
-  if (rows.length === 0) return null;
-
   const { wcCurrentlyPasses, rssCurrentlyPasses, wcBudget, nominalGapViolation } = result;
+
+  useEffect(() => {
+    onDetailOpenChange?.(openStrategyId !== null);
+  }, [onDetailOpenChange, openStrategyId]);
+
+  useEffect(() => {
+    onNominalGapViolationChange?.(nominalGapViolation);
+  }, [nominalGapViolation, onNominalGapViolationChange]);
+
+  if (rows.length === 0) return null;
 
   // ── Status banner ─────────────────────────────────────────────────────────
   let bannerClass = 'gs-banner-pass';
@@ -279,6 +302,8 @@ export function GoalSeekPanel() {
             <StrategyCard
               key={s.id}
               strategy={s}
+              open={openStrategyId === s.id}
+              onToggle={() => setOpenStrategyId((current) => (current === s.id ? null : s.id))}
               onApplyRow={handleApplyRow}
               onApplyAll={handleApplyAll}
             />

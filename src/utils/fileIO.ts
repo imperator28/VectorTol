@@ -13,7 +13,8 @@ export function serializeProject(
     version: 1,
     metadata: {
       ...metadata,
-      updatedAt: new Date().toISOString(),
+      createdAt: metadata.createdAt || new Date().toISOString(),
+      updatedAt: metadata.updatedAt || new Date().toISOString(),
       designIntent: target,
     },
     gridData: rows,

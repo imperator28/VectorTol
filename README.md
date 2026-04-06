@@ -18,6 +18,30 @@ VectorTol replaces brittle Excel spreadsheets and expensive cloud tools with a f
 
 ---
 
+## Implementation status
+
+The original delivery plan covered four phases: portable calculator, visual canvas, reporting/export, and smart analysis. Those phases are now complete, and the app has been extended with a Phase 5 polish and reliability pass.
+
+| Phase | Status | Delivered outcome |
+|---|---|---|
+| Phase 1 | Complete | Offline calculator, AG Grid stack-up editor, WC/RSS engine, `.vtol` save/load |
+| Phase 2 | Complete | Visual canvas, image import, bi-directional row/vector sync, undo/redo |
+| Phase 3 | Complete | PDF/XLSX/CSV export, editable metadata, direction lock, endpoint snap |
+| Phase 4 | Complete | ISO 286 tolerance standards, Tolerance Allocation, Nominal Advisor, themes |
+| Phase 5 | Complete | Tutorial onboarding, save-review modal, autosave/recovery, snapped insights layout, design-intent cards, workflow bug fixes |
+
+## What shipped beyond the original plan
+
+- Design Intent moved from a basic selector to a visual 6-card picker with per-intent guidance.
+- A guided tutorial now walks first-time users through the canvas, grid, design intent, and analysis flow with demo artwork.
+- Save and export actions now pause for metadata review and editing before writing files.
+- Auto-save and recovery drafts protect work between manual saves.
+- The analysis panel now snaps cleanly to 1-row, 2-row, or 3-row card layouts instead of resizing arbitrarily.
+- The right-side advisor panels react intelligently to drill-down workflows, including auto-opening Nominal Advisor when tolerances alone cannot solve the gap.
+- Recent bug fixes improved tooltip behavior, tutorial targeting, canvas/grid direction sync, row index visibility, and compact-card plot layout.
+
+---
+
 ## Core workflow
 
 ```
@@ -29,7 +53,7 @@ VectorTol replaces brittle Excel spreadsheets and expensive cloud tools with a f
 6. Run Monte Carlo for production-realistic simulation
 7. If failing: use Tolerance Allocation to redistribute tolerances across parts
 8. If nominal gap is wrong: use Nominal Advisor to find which dimensions to adjust
-9. Export a one-click PDF report or Excel workbook for design review
+9. Review title/author/date, then save or export for design review
 ```
 
 ---
@@ -41,8 +65,9 @@ VectorTol replaces brittle Excel spreadsheets and expensive cloud tools with a f
 - **Draw tolerance vectors** (arrows) directly on the image with click-drag
 - Each arrow auto-detects direction: Right/Up = +1, Left/Down = −1
 - Bi-directional sync: drawing an arrow creates a grid row; deleting either removes both
-- Pan and zoom (scroll wheel, spacebar, middle mouse — CAD-style controls)
+- Pan and zoom (scroll wheel + middle mouse drag — CAD-style controls)
 - Color-code vectors by part; adjust line width per vector
+- Auto-fit imported or tutorial demo images to the canvas
 - Undo/redo with 50-step history
 
 ### Precision Analysis Grid
@@ -56,6 +81,7 @@ VectorTol replaces brittle Excel spreadsheets and expensive cloud tools with a f
 ### Analysis Results
 - **Worst-Case (WC)**: deterministic maximum/minimum gap assuming all parts at their tolerance limits simultaneously
 - **RSS (Root Sum Square)**: statistical gap — assumes parts follow normal distributions; more realistic for production
+- **Compact analysis dashboard**: fixed 2×3 results grid with expandable RSS and Monte Carlo mini-plots
 - **Monte Carlo simulation**: 10K–1M iterations with configurable sample count; histogram with pass/fail coloring, σ-markers, yield %, and failure rate (ppm or %)
 - Design intent validation: Clearance, Interference, Flush, Proud, Recess, Custom — live PASS/FAIL badge
 
@@ -75,12 +101,15 @@ VectorTol replaces brittle Excel spreadsheets and expensive cloud tools with a f
 - **PDF** — one-click landscape A4 report: title block, annotated canvas diagram, full data table with % contribution, WC and RSS results with color-coded PASS/FAIL
 - **Excel (.xlsx)** — all grid columns plus analysis results section
 - **CSV** — raw stack-up data for further processing
+- **Save / export review modal** — edit title, author, and date before the file is written
+- **Auto-save + draft recovery** — periodic draft protection with configurable interval
 
 ### Professional UI
 - Three themes: Light, Dark, and Swiss International (high-contrast)
 - Resizable panels — workspace (canvas + grid) left, all results and insights right
-- Collapsible sections — hide panels you're not using to focus on what matters
-- Rich tooltip descriptions on every button
+- Snapped analysis-results resizing and smarter advisor focus states
+- Design Intent card picker with hover guidance
+- Rich tooltip descriptions on key controls
 - Interactive tutorial for new users (auto-starts on first launch, re-launchable via ? button)
 - Full keyboard shortcut set for efficient operation
 
@@ -95,7 +124,6 @@ VectorTol replaces brittle Excel spreadsheets and expensive cloud tools with a f
 | `L` | Toggle direction lock (H/V only) |
 | `S` | Toggle magnetic snap to endpoints |
 | `Shift` (hold while drawing) | Lock stroke to H or V |
-| `Space` (hold) | Temporary pan mode |
 | Middle mouse (hold) | Pan — CAD-style |
 | Scroll wheel | Zoom in / out |
 | `Delete` / `Backspace` | Remove selected vector + row |
@@ -139,6 +167,7 @@ Projects save as `.vtol` files — self-contained JSON including:
 - Background image (base64-embedded — no external dependencies)
 - Design intent settings
 - Project name and author
+- Save-review metadata edits and recovery-draft state compatibility
 
 Files saved in any version of VectorTol load correctly in later versions.
 

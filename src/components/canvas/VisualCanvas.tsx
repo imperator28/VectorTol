@@ -3,7 +3,7 @@ import { Stage, Layer, Image as KonvaImage, Line, Circle } from 'react-konva';
 import { useProjectStore } from '../../store/projectStore';
 import { useUiStore } from '../../store/uiStore';
 import { VectorArrow } from './VectorArrow';
-import { setStageRef } from '../../utils/stageRef';
+import { computeFitTransform, setStageRef } from '../../utils/stageRef';
 import type Konva from 'konva';
 
 const SNAP_RADIUS_PX = 16; // screen pixels within which endpoint snapping activates
@@ -29,6 +29,7 @@ export function VisualCanvas() {
   const rows = useProjectStore((s) => s.rows);
   const addVector = useProjectStore((s) => s.addVector);
   const removeVector = useProjectStore((s) => s.removeVector);
+  const setImageTransform = useProjectStore((s) => s.setImageTransform);
   const undo = useProjectStore((s) => s.undo);
   const redo = useProjectStore((s) => s.redo);
   const selectedRowId = useUiStore((s) => s.selectedRowId);
@@ -45,7 +46,7 @@ export function VisualCanvas() {
   const setShortcutsOpen = useUiStore((s) => s.setShortcutsOpen);
 
   // Canvas dimensions
-  const [dims, setDims] = useState({ width: 600, height: 400 });
+  const [dims, setDims] = useState({ width: 0, height: 0 });
   // Pan/zoom
   const [stagePos, setStagePos] = useState({ x: 0, y: 0 });
   const [stageScale, setStageScale] = useState(1);
@@ -54,19 +55,26 @@ export function VisualCanvas() {
   const [drawEnd, setDrawEnd] = useState<{ x: number; y: number } | null>(null);
   // Snap indicator: canvas-space point that is currently snapping
   const [snapIndicator, setSnapIndicator] = useState<{ x: number; y: number } | null>(null);
-  // Spacebar pan override
-  const [spaceToolOverride, setSpaceToolOverride] = useState<string | null>(null);
   // Middle-button pan
   const middlePanRef = useRef<{ lastX: number; lastY: number } | null>(null);
 
   const bgImage = useImage(canvasData.image);
-  const effectiveTool = spaceToolOverride !== null ? 'select' : canvasTool;
+  const effectiveTool = canvasTool;
 
   // Register stage ref for PDF export
   useEffect(() => {
     setStageRef(stageRef.current);
     return () => setStageRef(null);
   }, []);
+
+  useEffect(() => {
+    if (!bgImage) return;
+    const { x, y, scale, rotation } = canvasData.imageTransform;
+    const isDefaultTransform = x === 0 && y === 0 && scale === 1 && rotation === 0;
+    if (!isDefaultTransform || dims.width <= 0 || dims.height <= 0) return;
+    const fit = computeFitTransform(bgImage.naturalWidth, bgImage.naturalHeight);
+    if (fit) setImageTransform({ x: fit.x, y: fit.y, scale: fit.scale, rotation: 0 });
+  }, [bgImage, canvasData.imageTransform, dims.height, dims.width, setImageTransform]);
 
   // Resize observer
   useEffect(() => {
@@ -97,14 +105,6 @@ export function VisualCanvas() {
       if (e.key === 'l' || e.key === 'L') toggleDirectionLock();
       if (e.key === 's' || e.key === 'S') toggleSnap();
 
-      if (e.key === ' ' && spaceToolOverride === null) {
-        e.preventDefault();
-        setSpaceToolOverride(canvasTool);
-        setDrawStart(null);
-        setDrawEnd(null);
-        setSnapIndicator(null);
-      }
-
       if ((e.key === 'Delete' || e.key === 'Backspace') && selectedRowId) {
         removeVector(selectedRowId);
         setSelectedRowId(null);
@@ -118,18 +118,11 @@ export function VisualCanvas() {
       if (e.key === '?') { e.preventDefault(); setShortcutsOpen(true); return; }
     }
 
-    function onKeyUp(e: KeyboardEvent) {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
-      if (e.key === ' ' && spaceToolOverride !== null) setSpaceToolOverride(null);
-    }
-
     window.addEventListener('keydown', onKeyDown);
-    window.addEventListener('keyup', onKeyUp);
     return () => {
       window.removeEventListener('keydown', onKeyDown);
-      window.removeEventListener('keyup', onKeyUp);
     };
-  }, [selectedRowId, canvasTool, spaceToolOverride, setCanvasTool, removeVector, setSelectedRowId, undo, redo, toggleDirectionLock, toggleSnap, setShortcutsOpen]);
+  }, [selectedRowId, setCanvasTool, removeVector, setSelectedRowId, undo, redo, toggleDirectionLock, toggleSnap, setShortcutsOpen]);
 
   // Get canvas-space coordinates from the current pointer position
   const getPointerPos = useCallback(() => {
@@ -288,7 +281,6 @@ export function VisualCanvas() {
   const isMiddlePanning = middlePanRef.current !== null;
   let cursor = 'default';
   if (isMiddlePanning) cursor = 'grabbing';
-  else if (spaceToolOverride !== null) cursor = 'grab';
   else if (effectiveTool === 'draw') cursor = 'crosshair';
 
   return (

@@ -232,7 +232,7 @@ export function DistributionPlot({ mini = false }: { mini?: boolean }) {
 
   if (!plotData) {
     if (mini) {
-      return <svg width="100%" height={44} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid meet" style={{ display: 'block' }} />;
+      return <svg width="100%" height={44} viewBox="0 0 200 44" preserveAspectRatio="xMidYMid meet" style={{ display: 'block' }} />;
     }
     return (
       <div className="distribution-plot">
@@ -247,11 +247,68 @@ export function DistributionPlot({ mini = false }: { mini?: boolean }) {
 
   // ── Mini mode: tiny sparkline, no labels ───────────────────────────────
   if (mini) {
-    const { fullAreaPath, regionPaths, curvePath, colors: { PASS_FILL, FAIL_FILL, CURVE_STROKE } } = plotData;
+    const {
+      mu,
+      sigma,
+      xMin,
+      xMax,
+      colors: { PASS_FILL, FAIL_FILL, CURVE_STROKE },
+    } = plotData;
+    const regions = getFailureRegions(target.type, target.minGap, target.maxGap);
+    const W2 = 200;
+    const H2 = 44;
+    const PAD_X = 6;
+    const PAD_Y = 4;
+    const plotW = W2 - PAD_X * 2;
+    const plotH = H2 - PAD_Y * 2;
+    const steps = 120;
+    const dx = (xMax - xMin) / steps;
+    const points: { x: number; y: number }[] = [];
+    let yMax = 0;
+
+    for (let i = 0; i <= steps; i++) {
+      const x = xMin + i * dx;
+      const y = normalPdf(x, mu, sigma);
+      points.push({ x, y });
+      if (y > yMax) yMax = y;
+    }
+
+    const sxMini = (x: number) => PAD_X + ((x - xMin) / (xMax - xMin)) * plotW;
+    const syMini = (y: number) => PAD_Y + plotH - (y / (yMax * 1.08)) * plotH;
+    const curvePath = points
+      .map((p, i) => `${i === 0 ? 'M' : 'L'}${sxMini(p.x).toFixed(2)},${syMini(p.y).toFixed(2)}`)
+      .join(' ');
+    const fullAreaPath =
+      `M${sxMini(xMin).toFixed(2)},${syMini(0).toFixed(2)} ` +
+      points.map((p) => `L${sxMini(p.x).toFixed(2)},${syMini(p.y).toFixed(2)}`).join(' ') +
+      ` L${sxMini(xMax).toFixed(2)},${syMini(0).toFixed(2)} Z`;
+    const regionPaths = regions.flatMap((region) => {
+      const boundary = Math.max(xMin, Math.min(xMax, region.value));
+      const boundaryY = normalPdf(boundary, mu, sigma);
+      if (region.side === 'left') {
+        const failPts = points.filter((p) => p.x <= boundary);
+        if (failPts.length < 2) return [];
+        return [
+          `M${sxMini(xMin).toFixed(2)},${syMini(0).toFixed(2)} ` +
+          failPts.map((p) => `L${sxMini(p.x).toFixed(2)},${syMini(p.y).toFixed(2)}`).join(' ') +
+          ` L${sxMini(boundary).toFixed(2)},${syMini(boundaryY).toFixed(2)}` +
+          ` L${sxMini(boundary).toFixed(2)},${syMini(0).toFixed(2)} Z`,
+        ];
+      }
+      const failPts = points.filter((p) => p.x >= boundary);
+      if (failPts.length < 2) return [];
+      return [
+        `M${sxMini(boundary).toFixed(2)},${syMini(0).toFixed(2)} ` +
+        `L${sxMini(boundary).toFixed(2)},${syMini(boundaryY).toFixed(2)} ` +
+        failPts.map((p) => `L${sxMini(p.x).toFixed(2)},${syMini(p.y).toFixed(2)}`).join(' ') +
+        ` L${sxMini(xMax).toFixed(2)},${syMini(0).toFixed(2)} Z`,
+      ];
+    });
+
     return (
-      <svg width="100%" height={44} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid meet" style={{ display: 'block' }}>
+      <svg width="100%" height={H2} viewBox={`0 0 ${W2} ${H2}`} preserveAspectRatio="xMidYMid meet" style={{ display: 'block' }}>
         <path d={fullAreaPath} fill={PASS_FILL} />
-        {regionPaths.map((rp, i) => <path key={i} d={rp.d} fill={FAIL_FILL} />)}
+        {regionPaths.map((rp, i) => <path key={i} d={rp} fill={FAIL_FILL} />)}
         <path d={curvePath} fill="none" stroke={CURVE_STROKE} strokeWidth={2} />
       </svg>
     );

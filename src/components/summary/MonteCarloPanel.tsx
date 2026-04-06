@@ -2,6 +2,7 @@ import { useState, useCallback, useMemo, useRef, createContext, useContext } fro
 import { useProjectStore } from '../../store/projectStore';
 import { useThemeStore } from '../../store/themeStore';
 import { runMonteCarlo, type MonteCarloResult, type MonteCarloConfig } from '../../engine/monteCarlo';
+import { Icon } from '../ui/Icon';
 
 function css(prop: string): string {
   return getComputedStyle(document.documentElement).getPropertyValue(prop).trim();
@@ -89,15 +90,30 @@ const ITERATION_OPTIONS = [
 ];
 
 // ── Card mode: controls + summary stats ─────────────────────────────────────
-function McCard() {
+function McCard({ onExpand }: { onExpand?: () => void }) {
   const rows = useProjectStore((s) => s.rows);
   const { result, running, elapsed, iterations, setIterations, handleRun } = useMc();
 
   if (rows.length === 0) return null;
 
   return (
-    <div className="result-card mc-card">
-      <h4>Monte Carlo</h4>
+    <div className="result-card result-card-plot mc-card">
+      <div className="result-card-header">
+        <h4>Monte Carlo</h4>
+        {onExpand && (
+          <>
+            <span className="plot-expand-hint">preview + expand</span>
+            <button
+              className="plot-expand-btn"
+              onClick={onExpand}
+              title="Expand"
+              aria-label="Expand Monte Carlo plot"
+            >
+              <Icon name="maximize" size={10} />
+            </button>
+          </>
+        )}
+      </div>
       <div className="mc-controls">
         <select
           value={iterations}
@@ -119,15 +135,17 @@ function McCard() {
           <span className="mc-elapsed">{elapsed}ms</span>
         )}
       </div>
-      {result && (
-        <table className="results-table">
-          <tbody>
-            <tr><td>Mean:</td><td className="result-value">{formatNum(result.mean)}</td></tr>
-            <tr><td>Std Dev:</td><td className="result-value">{formatNum(result.stdDev)}</td></tr>
-            <tr><td>F/R:</td><td className="result-value">{formatPct(result.failureRate)}</td></tr>
-            <tr><td>Yield:</td><td className="result-value">{result.yieldPercent.toFixed(4)}%</td></tr>
-          </tbody>
-        </table>
+      <div className="result-card-mini-plot">
+        <McMini />
+      </div>
+      {result ? (
+        <div className="mc-summary-strip">
+          <span>Mean <strong className="result-value">{formatNum(result.mean)}</strong></span>
+          <span>Yield <strong className="result-value">{result.yieldPercent.toFixed(2)}%</strong></span>
+          <span>F/R <strong className="result-value">{formatPct(result.failureRate)}</strong></span>
+        </div>
+      ) : (
+        <div className="mc-summary-empty">Run the simulation to preview the histogram and yield.</div>
       )}
     </div>
   );
@@ -386,8 +404,14 @@ function McFull() {
 }
 
 // ── Public component with mode switch ───────────────────────────────────────
-export function MonteCarloPanel({ mode }: { mode: 'card' | 'plot' | 'mini' | 'full' }) {
-  if (mode === 'card') return <McCard />;
+export function MonteCarloPanel({
+  mode,
+  onExpand,
+}: {
+  mode: 'card' | 'plot' | 'mini' | 'full';
+  onExpand?: () => void;
+}) {
+  if (mode === 'card') return <McCard onExpand={onExpand} />;
   if (mode === 'mini') return <McMini />;
   if (mode === 'full') return <McFull />;
   return <McPlot />;

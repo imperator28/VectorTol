@@ -120,12 +120,6 @@ export function ResultsFooter() {
             </table>
           </div>
 
-          <MonteCarloPanel mode="card" />
-        </div>
-
-        {/* Plot preview cards — mini sparklines with expand */}
-        <div className="results-plot-cards">
-          {/* RSS Distribution mini card */}
           <div
             className="result-card result-card-plot result-card-clickable"
             onClick={() => setExpandedPlot('dist')}
@@ -151,31 +145,7 @@ export function ResultsFooter() {
             </div>
           </div>
 
-          {/* Monte Carlo mini card */}
-          <div
-            className="result-card result-card-plot result-card-clickable"
-            onClick={() => setExpandedPlot('mc')}
-            title="Click to expand Monte Carlo simulation"
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => e.key === 'Enter' && setExpandedPlot('mc')}
-          >
-            <div className="result-card-header">
-              <h4>Monte Carlo</h4>
-              <span className="plot-expand-hint">click to expand</span>
-              <button
-                className="plot-expand-btn"
-                onClick={(e) => { e.stopPropagation(); setExpandedPlot('mc'); }}
-                title="Expand"
-                aria-label="Expand Monte Carlo plot"
-              >
-                <Icon name="maximize" size={10} />
-              </button>
-            </div>
-            <div className="result-card-mini-plot">
-              <MonteCarloPanel mode="mini" />
-            </div>
-          </div>
+          <MonteCarloPanel mode="card" onExpand={() => setExpandedPlot('mc')} />
         </div>
 
         {/* Expand modals */}
@@ -186,9 +156,7 @@ export function ResultsFooter() {
         )}
         {expandedPlot === 'mc' && (
           <PlotModal title="Monte Carlo Simulation" onClose={() => setExpandedPlot(null)}>
-            <McProvider>
-              <MonteCarloPanel mode="full" />
-            </McProvider>
+            <MonteCarloPanel mode="full" />
           </PlotModal>
         )}
       </div>

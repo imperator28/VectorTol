@@ -2,9 +2,32 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTutorialStore, TOTAL_STEPS } from '../../store/tutorialStore';
 import { useProjectStore } from '../../store/projectStore';
-import { TUTORIAL_STEPS, DEMO_ROWS, DEMO_TARGET, DEMO_METADATA } from './tutorialData';
+import { TUTORIAL_STEPS, DEMO_ROWS, DEMO_TARGET, DEMO_METADATA, DEMO_CANVAS_DATA } from './tutorialData';
+import { useUiStore } from '../../store/uiStore';
+import type { CanvasTool } from '../../types/canvas';
 import { Icon } from '../ui/Icon';
 import { v4 as uuidv4 } from 'uuid';
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(Math.max(value, min), max);
+}
+
+function getActiveStepFocus(
+  target: string | null,
+  placement: 'top' | 'bottom' | 'left' | 'right' | 'center',
+  trigger: string | null,
+  interactionDone: boolean,
+  canvasTool: CanvasTool,
+) {
+  if (trigger === 'vector-drawn' && !interactionDone && canvasTool === 'draw') {
+    return {
+      target: 'canvas',
+      placement: 'right' as const,
+    };
+  }
+
+  return { target, placement };
+}
 
 function useTargetRect(target: string | null, step: number) {
   const [rect, setRect] = useState<DOMRect | null>(null);
@@ -48,19 +71,33 @@ export function TutorialOverlay() {
   const loadProject = useProjectStore((s) => s.loadProject);
   const rows = useProjectStore((s) => s.rows);
   const canvasData = useProjectStore((s) => s.canvasData);
+  const setCanvasTool = useUiStore((s) => s.setCanvasTool);
+  const setSelectedRowId = useUiStore((s) => s.setSelectedRowId);
+  const canvasTool = useUiStore((s) => s.canvasTool);
   const prevRowCountRef = useRef(rows.length);
   const prevVectorCountRef = useRef(canvasData.vectors.length);
+  const bubbleRef = useRef<HTMLDivElement>(null);
+  const [bubbleSize, setBubbleSize] = useState({ width: 320, height: 220 });
 
   const stepData = TUTORIAL_STEPS[step];
-  const rect = useTargetRect(stepData?.target ?? null, step);
+  const activeFocus = getActiveStepFocus(
+    stepData?.target ?? null,
+    stepData?.placement ?? 'center',
+    stepData?.trigger ?? null,
+    interactionDone,
+    canvasTool,
+  );
+  const rect = useTargetRect(activeFocus.target, step);
 
   // Step 0: load demo data when tutorial starts
   useEffect(() => {
     if (active && step === 0) {
       const demoRows = DEMO_ROWS.map((r) => ({ ...r, id: uuidv4() }));
-      loadProject(DEMO_METADATA as any, demoRows, DEMO_TARGET, null);
+      loadProject(DEMO_METADATA as any, demoRows, DEMO_TARGET, null, DEMO_CANVAS_DATA);
+      setCanvasTool('select');
+      setSelectedRowId(null);
     }
-  }, [active, step, loadProject]);
+  }, [active, step, loadProject, setCanvasTool, setSelectedRowId]);
 
   // Reset row/vector count refs when step changes
   useEffect(() => {
@@ -88,15 +125,43 @@ export function TutorialOverlay() {
     return () => clearTimeout(timer);
   }, [interactionDone, next]);
 
+  useEffect(() => {
+    if (!active) return;
+
+    function measureBubble() {
+      const bubble = bubbleRef.current;
+      if (!bubble) return;
+      const nextSize = {
+        width: bubble.offsetWidth,
+        height: bubble.offsetHeight,
+      };
+      setBubbleSize((prev) => (
+        prev.width === nextSize.width && prev.height === nextSize.height ? prev : nextSize
+      ));
+    }
+
+    const timer = setTimeout(measureBubble, 0);
+    window.addEventListener('resize', measureBubble);
+
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('resize', measureBubble);
+    };
+  }, [active, step, interactionDone]);
+
   if (!active || !stepData) return null;
 
-  const isCentered = stepData.target === null || stepData.placement === 'center';
+  const isCentered = activeFocus.target === null || activeFocus.placement === 'center';
   const hasSpotlight = !isCentered && rect !== null;
   const canGoNext = !stepData.interactive || interactionDone;
   const isLast = step === TOTAL_STEPS - 1;
 
   // ── Spotlight ring ───────────────────────────────────────────────────────
   const PADDING = 8;
+  const safeTop = rect ? Math.max(0, rect.top - PADDING) : 0;
+  const safeBottom = rect ? Math.min(window.innerHeight, rect.bottom + PADDING) : 0;
+  const safeLeft = rect ? Math.max(0, rect.left - PADDING) : 0;
+  const safeRight = rect ? Math.min(window.innerWidth, rect.right + PADDING) : 0;
   const spotStyle: React.CSSProperties | null = hasSpotlight && rect
     ? {
         position: 'fixed',
@@ -127,31 +192,34 @@ export function TutorialOverlay() {
     };
   } else {
     const GAP = 20;
-    switch (stepData.placement) {
+    const VIEWPORT_MARGIN = 16;
+    const maxLeft = Math.max(VIEWPORT_MARGIN, window.innerWidth - bubbleSize.width - VIEWPORT_MARGIN);
+    const maxTop = Math.max(VIEWPORT_MARGIN, window.innerHeight - bubbleSize.height - VIEWPORT_MARGIN);
+    const centeredLeft = clamp(rect.left + rect.width / 2 - bubbleSize.width / 2, VIEWPORT_MARGIN, maxLeft);
+    const centeredTop = clamp(rect.top + rect.height / 2 - bubbleSize.height / 2, VIEWPORT_MARGIN, maxTop);
+
+    switch (activeFocus.placement) {
       case 'left':
         bubbleStyle = {
           position: 'fixed',
-          top: Math.max(16, Math.min(window.innerHeight - 400, rect.top + rect.height / 2)),
-          left: rect.left - GAP,
-          transform: 'translate(-100%, -50%)',
+          top: centeredTop,
+          left: clamp(rect.left - GAP - bubbleSize.width, VIEWPORT_MARGIN, maxLeft),
           zIndex: 60002,
         };
         break;
       case 'right':
         bubbleStyle = {
           position: 'fixed',
-          top: Math.max(16, Math.min(window.innerHeight - 400, rect.top + rect.height / 2)),
-          left: rect.right + GAP,
-          transform: 'translateY(-50%)',
+          top: centeredTop,
+          left: clamp(rect.right + GAP, VIEWPORT_MARGIN, maxLeft),
           zIndex: 60002,
         };
         break;
       case 'top':
         bubbleStyle = {
           position: 'fixed',
-          top: rect.top - GAP,
-          left: Math.max(16, Math.min(window.innerWidth - 340, rect.left + rect.width / 2)),
-          transform: 'translate(-50%, -100%)',
+          top: clamp(rect.top - GAP - bubbleSize.height, VIEWPORT_MARGIN, maxTop),
+          left: centeredLeft,
           zIndex: 60002,
         };
         break;
@@ -159,9 +227,8 @@ export function TutorialOverlay() {
       default:
         bubbleStyle = {
           position: 'fixed',
-          top: rect.bottom + GAP,
-          left: Math.max(16, Math.min(window.innerWidth - 340, rect.left + rect.width / 2)),
-          transform: 'translateX(-50%)',
+          top: clamp(rect.bottom + GAP, VIEWPORT_MARGIN, maxTop),
+          left: centeredLeft,
           zIndex: 60002,
         };
     }
@@ -178,13 +245,13 @@ export function TutorialOverlay() {
       {hasSpotlight && rect && (
         <>
           {/* top strip */}
-          <div style={{ position: 'fixed', inset: 0, top: 0, height: rect.top - PADDING, background: 'rgba(0,0,0,0.55)', zIndex: 59999, pointerEvents: 'none' }} />
+          <div style={{ position: 'fixed', inset: 0, top: 0, height: safeTop, background: 'rgba(0,0,0,0.55)', zIndex: 59999, pointerEvents: 'none' }} />
           {/* bottom strip */}
-          <div style={{ position: 'fixed', inset: 0, top: rect.bottom + PADDING, bottom: 0, background: 'rgba(0,0,0,0.55)', zIndex: 59999, pointerEvents: 'none' }} />
+          <div style={{ position: 'fixed', inset: 0, top: safeBottom, bottom: 0, background: 'rgba(0,0,0,0.55)', zIndex: 59999, pointerEvents: 'none' }} />
           {/* left strip */}
-          <div style={{ position: 'fixed', top: rect.top - PADDING, left: 0, width: rect.left - PADDING, height: rect.height + PADDING * 2, background: 'rgba(0,0,0,0.55)', zIndex: 59999, pointerEvents: 'none' }} />
+          <div style={{ position: 'fixed', top: safeTop, left: 0, width: safeLeft, height: Math.max(0, safeBottom - safeTop), background: 'rgba(0,0,0,0.55)', zIndex: 59999, pointerEvents: 'none' }} />
           {/* right strip */}
-          <div style={{ position: 'fixed', top: rect.top - PADDING, left: rect.right + PADDING, right: 0, height: rect.height + PADDING * 2, background: 'rgba(0,0,0,0.55)', zIndex: 59999, pointerEvents: 'none' }} />
+          <div style={{ position: 'fixed', top: safeTop, left: safeRight, right: 0, height: Math.max(0, safeBottom - safeTop), background: 'rgba(0,0,0,0.55)', zIndex: 59999, pointerEvents: 'none' }} />
         </>
       )}
 
@@ -192,7 +259,7 @@ export function TutorialOverlay() {
       {spotStyle && <div style={spotStyle} />}
 
       {/* Tutorial bubble */}
-      <div className="tour-bubble" style={bubbleStyle}>
+      <div ref={bubbleRef} className="tour-bubble" style={bubbleStyle}>
         <button className="tour-close" onClick={finish} title="Skip tutorial">
           <Icon name="x" size={12} />
         </button>
@@ -218,7 +285,7 @@ export function TutorialOverlay() {
             )}
             {canGoNext && (
               <button className="tour-btn tour-btn-primary" onClick={isLast ? finish : next}>
-                {isLast ? 'Start working ✓' : 'Next →'}
+                {isLast ? 'Start working' : 'Next →'}
               </button>
             )}
           </div>

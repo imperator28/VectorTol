@@ -4,6 +4,7 @@ import { useProjectStore } from '../../store/projectStore';
 import type { CanvasTool } from '../../types/canvas';
 import { ColorPickerPopover } from './ColorPickerPopover';
 import { Icon } from '../ui/Icon';
+import { Tooltip } from '../ui/Tooltip';
 import { computeFitTransform } from '../../utils/stageRef';
 
 const STROKE_WIDTHS = [1, 2, 3, 4, 5];
@@ -81,48 +82,56 @@ export function CanvasToolbar() {
 
   function btn(tool: CanvasTool, label: string) {
     const icon = tool === 'select' ? 'cursor' : 'pen';
+    const tooltip = tool === 'select' ? 'Select and move vectors (V)' : 'Draw a new vector on the canvas (D)';
     return (
-      <button
-        className={canvasTool === tool ? 'canvas-tool-active' : ''}
-        onClick={() => setCanvasTool(tool)}
-        title={tool === 'select' ? 'Select / Move (V)' : 'Draw Vector (D)'}
-      >
-        <Icon name={icon} size={14} /> {label}
-      </button>
+      <Tooltip content={tooltip} placement="bottom">
+        <button
+          data-tour={tool === 'draw' ? 'canvas-draw-tool' : undefined}
+          className={canvasTool === tool ? 'canvas-tool-active' : ''}
+          onClick={() => setCanvasTool(tool)}
+        >
+          <Icon name={icon} size={14} /> {label}
+        </button>
+      </Tooltip>
     );
   }
 
   return (
     <div className="canvas-toolbar">
-      <button onClick={undo} disabled={past.length === 0} title="Undo (Ctrl+Z)"><Icon name="undo" size={14} /> Undo</button>
-      <button onClick={redo} disabled={future.length === 0} title="Redo (Ctrl+Y / Ctrl+Shift+Z)"><Icon name="redo" size={14} /> Redo</button>
+      <Tooltip content="Undo the last canvas or table action (Ctrl+Z)" placement="bottom">
+        <button onClick={undo} disabled={past.length === 0}><Icon name="undo" size={14} /> Undo</button>
+      </Tooltip>
+      <Tooltip content="Redo the last undone action (Ctrl+Y / Ctrl+Shift+Z)" placement="bottom">
+        <button onClick={redo} disabled={future.length === 0}><Icon name="redo" size={14} /> Redo</button>
+      </Tooltip>
       <span className="canvas-toolbar-sep" />
       {btn('select', 'Select')}
       {btn('draw', 'Draw')}
       <span className="canvas-toolbar-sep" />
       <span className="canvas-toolbar-label">Width:</span>
       {STROKE_WIDTHS.map((w) => (
-        <button
-          key={w}
-          className={displayWidth === w ? 'canvas-tool-active' : ''}
-          onClick={() => handleWidthChange(w)}
-          title={`Stroke width ${w}px`}
-        >
-          {w}
-        </button>
+        <Tooltip key={w} content={`Set stroke width to ${w}px`} placement="bottom">
+          <button
+            className={displayWidth === w ? 'canvas-tool-active' : ''}
+            onClick={() => handleWidthChange(w)}
+          >
+            {w}
+          </button>
+        </Tooltip>
       ))}
       <span className="canvas-toolbar-sep" />
 
       {/* Vector color — portal-based picker escapes toolbar overflow */}
       <span className="canvas-toolbar-label">Color:</span>
       <div className="color-swatch-btn-wrapper">
-        <button
-          ref={vectorSwatchRef}
-          className="color-swatch-btn"
-          style={{ background: displayColor }}
-          title="Arrow color"
-          onClick={() => setOpenPicker(openPicker === 'vector' ? null : 'vector')}
-        />
+        <Tooltip content="Choose the default arrow color" placement="bottom">
+          <button
+            ref={vectorSwatchRef}
+            className="color-swatch-btn"
+            style={{ background: displayColor }}
+            onClick={() => setOpenPicker(openPicker === 'vector' ? null : 'vector')}
+          />
+        </Tooltip>
         {openPicker === 'vector' && (
           <ColorPickerPopover
             label="Arrow Color"
@@ -137,13 +146,14 @@ export function CanvasToolbar() {
       {/* Highlight color */}
       <span className="canvas-toolbar-label">Highlight:</span>
       <div className="color-swatch-btn-wrapper">
-        <button
-          ref={highlightSwatchRef}
-          className="color-swatch-btn"
-          style={{ background: highlightColor }}
-          title="Selected arrow highlight color"
-          onClick={() => setOpenPicker(openPicker === 'highlight' ? null : 'highlight')}
-        />
+        <Tooltip content="Choose the selected-arrow highlight color" placement="bottom">
+          <button
+            ref={highlightSwatchRef}
+            className="color-swatch-btn"
+            style={{ background: highlightColor }}
+            onClick={() => setOpenPicker(openPicker === 'highlight' ? null : 'highlight')}
+          />
+        </Tooltip>
         {openPicker === 'highlight' && (
           <ColorPickerPopover
             label="Highlight Color"
@@ -156,46 +166,50 @@ export function CanvasToolbar() {
       </div>
 
       <span className="canvas-toolbar-sep" />
-      <button
-        className={directionLock ? 'canvas-tool-active' : ''}
-        onClick={toggleDirectionLock}
-        title="Direction Lock — constrain arrows to H/V only. Toggle with L, or hold Shift while drawing"
-      >
-        <Icon name={directionLock ? 'lock' : 'unlock'} size={14} /> Lock
-      </button>
-      <button
-        className={snapEnabled ? 'canvas-tool-active' : ''}
-        onClick={toggleSnap}
-        title="Magnetic Snap — auto-snap to existing vector endpoints (S)"
-      >
-        <Icon name="snap" size={14} /> Snap
-      </button>
-      <button
-        onClick={flipAllDirections}
-        title="Flip all vector directions (+/- swap)"
-      >
-        <Icon name="flip-h" size={14} /> Flip All
-      </button>
+      <Tooltip content="Constrain drawing to horizontal or vertical directions (L)" placement="bottom">
+        <button
+          className={directionLock ? 'canvas-tool-active' : ''}
+          onClick={toggleDirectionLock}
+        >
+          <Icon name={directionLock ? 'lock' : 'unlock'} size={14} /> Lock
+        </button>
+      </Tooltip>
+      <Tooltip content="Snap new vectors to nearby endpoints (S)" placement="bottom">
+        <button
+          className={snapEnabled ? 'canvas-tool-active' : ''}
+          onClick={toggleSnap}
+        >
+          <Icon name="snap" size={14} /> Snap
+        </button>
+      </Tooltip>
+      <Tooltip content="Reverse every vector direction to match +/- changes in the table" placement="bottom">
+        <button onClick={flipAllDirections}>
+          <Icon name="flip-h" size={14} /> Flip All
+        </button>
+      </Tooltip>
       <span className="canvas-toolbar-sep" />
-      <button onClick={handleImageImport} title="Import background image">
-        <Icon name="image" size={14} /> Image
-      </button>
-      <button
-        onClick={() => {
-          if (!canvasData.image) return;
-          const img = new window.Image();
-          img.onload = () => {
-            const fit = computeFitTransform(img.naturalWidth, img.naturalHeight);
-            if (fit) setImageTransform({ x: fit.x, y: fit.y, scale: fit.scale, rotation: canvasData.imageTransform.rotation });
-          };
-          img.src = canvasData.image;
-        }}
-        disabled={!canvasData.image}
-        title="Fit image to canvas"
-      >
-        Fit
-      </button>
-      <span className="canvas-toolbar-hint">Space=pan</span>
+      <Tooltip content="Import a reference image behind the vectors" placement="bottom">
+        <button onClick={handleImageImport}>
+          <Icon name="image" size={14} /> Image
+        </button>
+      </Tooltip>
+      <Tooltip content="Auto-fit the current background image to the canvas" placement="bottom">
+        <button
+          onClick={() => {
+            if (!canvasData.image) return;
+            const img = new window.Image();
+            img.onload = () => {
+              const fit = computeFitTransform(img.naturalWidth, img.naturalHeight);
+              if (fit) setImageTransform({ x: fit.x, y: fit.y, scale: fit.scale, rotation: canvasData.imageTransform.rotation });
+            };
+            img.src = canvasData.image;
+          }}
+          disabled={!canvasData.image}
+        >
+          Fit
+        </button>
+      </Tooltip>
+      <span className="canvas-toolbar-hint">Middle drag=pan</span>
     </div>
   );
 }

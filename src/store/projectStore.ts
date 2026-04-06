@@ -213,9 +213,30 @@ export const useProjectStore = create<ProjectState>((set, get) => {
     updateRow: (id: RowId, updates: Partial<StackRow>) => {
       pushHistory(snapshot());
       const state = get();
+      const currentRow = state.rows.find((r) => r.id === id);
       const rows = state.rows.map((r) => (r.id === id ? { ...r, ...updates } : r));
+      let vectors = state.canvasData.vectors;
+
+      if (
+        currentRow &&
+        updates.direction !== undefined &&
+        updates.direction !== currentRow.direction
+      ) {
+        vectors = state.canvasData.vectors.map((vector) =>
+          vector.id === id
+            ? {
+                ...vector,
+                startX: vector.endX,
+                startY: vector.endY,
+                endX: vector.startX,
+                endY: vector.startY,
+              }
+            : vector,
+        );
+      }
+
       const computed = recomputeState(rows, state.target);
-      set({ rows, isDirty: true, ...computed });
+      set({ rows, isDirty: true, canvasData: { ...state.canvasData, vectors }, ...computed });
     },
 
     reorderRows: (newRows: StackRow[]) => {

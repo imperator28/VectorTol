@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback } from 'react';
+import { useMemo, useState, useCallback, useEffect } from 'react';
 import { useProjectStore } from '../../store/projectStore';
 import {
   runNominalAdvisor,
@@ -39,15 +39,17 @@ const STRATEGY_ICONS: Record<NominalStrategy['id'], string> = {
 
 function NominalStrategyCard({
   strategy,
+  open,
+  onToggle,
   onApplyRow,
   onApplyAll,
 }: {
   strategy: NominalStrategy;
+  open: boolean;
+  onToggle: () => void;
   onApplyRow: (change: NominalChange) => void;
   onApplyAll: (strategy: NominalStrategy) => void;
 }) {
-  const [open, setOpen] = useState(false);
-
   return (
     <div
       className={[
@@ -59,7 +61,7 @@ function NominalStrategyCard({
         .join(' ')}
     >
       {/* Header */}
-      <button className="na-strategy-header" onClick={() => setOpen((o) => !o)}>
+      <button className="na-strategy-header" onClick={onToggle}>
         <span className="na-strategy-icon">{STRATEGY_ICONS[strategy.id]}</span>
         <span className="na-strategy-label">
           {strategy.label}
@@ -193,13 +195,18 @@ function DimLockChip({
 
 // ── main panel ────────────────────────────────────────────────────────────────
 
-export function NominalAdvisorPanel() {
+export function NominalAdvisorPanel({
+  onDetailOpenChange,
+}: {
+  onDetailOpenChange?: (open: boolean) => void;
+}) {
   const rows      = useProjectStore((s) => s.rows);
   const target    = useProjectStore((s) => s.target);
   const updateRow = useProjectStore((s) => s.updateRow);
 
   // Locked rows — user-toggled set of row IDs excluded from adjustment
   const [lockedIds, setLockedIds] = useState<Set<string>>(new Set());
+  const [openStrategyId, setOpenStrategyId] = useState<NominalStrategy['id'] | null>(null);
 
   const toggleLock = useCallback((id: string) => {
     setLockedIds((prev) => {
@@ -239,6 +246,16 @@ export function NominalAdvisorPanel() {
     () => runNominalAdvisor(advisorInput, target, lockedIds),
     [advisorInput, target, lockedIds],
   );
+
+  useEffect(() => {
+    if (openStrategyId && !result.strategies.some((strategy) => strategy.id === openStrategyId)) {
+      setOpenStrategyId(null);
+    }
+  }, [openStrategyId, result.strategies]);
+
+  useEffect(() => {
+    onDetailOpenChange?.(openStrategyId !== null);
+  }, [onDetailOpenChange, openStrategyId]);
 
   const handleApplyRow = useCallback(
     (change: NominalChange) => {
@@ -330,6 +347,8 @@ export function NominalAdvisorPanel() {
             <NominalStrategyCard
               key={s.id}
               strategy={s}
+              open={openStrategyId === s.id}
+              onToggle={() => setOpenStrategyId((current) => (current === s.id ? null : s.id))}
               onApplyRow={handleApplyRow}
               onApplyAll={handleApplyAll}
             />

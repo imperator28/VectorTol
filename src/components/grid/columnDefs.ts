@@ -5,7 +5,9 @@ export const columnDefs: ColDef[] = [
   {
     headerName: '#',
     valueGetter: (params) => params.node?.rowIndex != null ? params.node.rowIndex + 1 : '',
-    width: 50,
+    width: 68,
+    minWidth: 68,
+    maxWidth: 68,
     editable: false,
     sortable: false,
     filter: false,

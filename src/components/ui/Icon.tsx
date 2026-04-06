@@ -24,8 +24,8 @@ const PATHS: Record<string, string> = {
   // Canvas tools
   cursor: 'M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3Z',
   pen: 'M12 19l7-7 3 3-7 7-3-3ZM18 12l-1.5-1.5M2 22l1-6 12.5-12.5 3 3L6 19l-4 3Z',
-  undo: 'M3 7v6h6M3 13A9 9 0 1 0 6.2 5.2',
-  redo: 'M21 7v6h-6M21 13A9 9 0 1 1 17.8 5.2',
+  undo: 'M9 14 4 9l5-5M4 9h11a4 4 0 1 1 0 8h-1',
+  redo: 'm15 14 5-5-5-5M20 9H9a4 4 0 0 0 0 8h1',
   lock: 'M5 11h14v9H5v-9ZM7 11V7a5 5 0 0 1 10 0v4',
   unlock: 'M5 11h14v9H5v-9ZM7 11V7a5 5 0 0 1 9.9-1',
   magnet: 'M7 2v11a5 5 0 0 0 10 0V2M7 2h4M13 2h4',

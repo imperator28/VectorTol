@@ -10,7 +10,6 @@ const SHORTCUTS = [
   { key: 'S', action: 'Toggle magnetic snap to endpoints' },
   { key: 'Shift (hold while drawing)', action: 'Lock direction to H or V for that stroke' },
   { section: 'Navigation' },
-  { key: 'Space (hold)', action: 'Temporary pan mode' },
   { key: 'Middle mouse (hold)', action: 'Pan — CAD-style' },
   { key: 'Scroll wheel', action: 'Zoom in / out' },
   { section: 'Editing' },

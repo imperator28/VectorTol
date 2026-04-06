@@ -1,5 +1,6 @@
 import type { StackRow } from '../../types/grid';
 import type { TargetScenario } from '../../types/project';
+import { DEMO_CANVAS_DATA } from './tutorialCanvasArt';
 
 /** Which action must the user perform on an interactive step */
 export type InteractionTrigger = 'vector-drawn' | 'row-added' | null;
@@ -36,11 +37,11 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   },
   {
     title: 'Add a Row',
-    body: 'Click the "+ Row" button in the toolbar (top-left) to add a new dimension to the stack-up. Try it now!',
-    target: 'toolbar',
+    body: 'Click the Row button with the plus icon in the top toolbar to add a new dimension to the stack-up. Try it now.',
+    target: 'add-row-button',
     placement: 'bottom',
     interactive: true,
-    interactionHint: 'Click "+ Row" in the toolbar to continue →',
+    interactionHint: 'Click the Row button in the toolbar to continue.',
     trigger: 'row-added',
   },
   {
@@ -63,7 +64,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   },
   {
     title: 'Visual Canvas',
-    body: 'The canvas lets you draw tolerance vectors directly on a cross-section image. Each arrow you draw creates a row in the grid — so your diagram and your numbers stay in sync automatically.',
+    body: 'The canvas lets you draw tolerance vectors directly on a cross-section image. A demo assembly image is already loaded so you can see what to trace. Each arrow you draw creates a row in the grid, so your diagram and your numbers stay in sync automatically.',
     target: 'canvas',
     placement: 'right',
     interactive: false,
@@ -72,11 +73,11 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   },
   {
     title: 'Draw a Vector',
-    body: 'Select the "Draw" tool from the canvas toolbar (or press D), then click and drag on the canvas to draw an arrow representing a dimension.',
-    target: 'canvas',
-    placement: 'right',
+    body: 'Select the Draw tool from the canvas toolbar (or press D), then click and drag on the demo image to draw an arrow representing a dimension.',
+    target: 'canvas-draw-tool',
+    placement: 'bottom',
     interactive: true,
-    interactionHint: 'Draw an arrow on the canvas to continue →',
+    interactionHint: 'Choose Draw, then drag on the demo image to continue.',
     trigger: 'vector-drawn',
   },
   {
@@ -165,3 +166,5 @@ export const DEMO_METADATA = {
   updatedAt: new Date().toISOString(),
   designIntent: DEMO_TARGET,
 };
+
+export { DEMO_CANVAS_DATA };
