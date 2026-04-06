@@ -293,6 +293,46 @@
   /* Slight padding so plot doesn't touch card edges */
 }
 
+.result-card-mini-plot {
+  margin-top: 4px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--bg-app);
+}
+
+.result-card-clickable {
+  cursor: pointer;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.result-card-clickable:hover {
+  border-color: var(--accent-border);
+  box-shadow: 0 0 0 2px var(--accent-bg);
+}
+
+.plot-expand-hint {
+  font-size: 9px;
+  color: var(--text-tertiary);
+  font-style: italic;
+  margin-left: 4px;
+  flex: 1;
+}
+
+.mc-mini-wrap {
+  margin-top: 4px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--bg-app);
+}
+
+.mc-mini-empty {
+  font-size: 10px;
+  color: var(--text-tertiary);
+  font-style: italic;
+  padding: 8px 0;
+  text-align: center;
+}
+
 /* Suppress internal panel headings — label bars provide section names */
 .insights-panel .goalseek-panel h3,
 .insights-panel .nominal-advisor-panel h3 {
@@ -395,6 +435,17 @@
 
 .pane-toggle-btn:hover {
   background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.pane-toggle-btn-icon {
+  margin-left: auto;
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+}
+
+.rp-label-bar-toggle:hover .pane-toggle-btn-icon,
+.pane-label-bar:hover .pane-toggle-btn-icon {
   color: var(--text-primary);
 }
 
@@ -2044,6 +2095,12 @@
   inset: 0;
   background: rgba(0, 0, 0, 0.55);
   z-index: 59998;
+  pointer-events: none;
+}
+
+.tour-backdrop-spotlight {
+  /* When spotlight is active, backdrop is handled via 4-strip divs instead */
+  background: transparent;
 }
 
 .tour-bubble {
@@ -2234,4 +2291,143 @@
 [data-theme="swiss"] .tour-btn-primary:hover {
   background: #CC2600;
   border-color: #CC2600;
+}
+
+/* ── Keyboard Shortcuts Modal ───────────────────────────────────────────────── */
+.shortcuts-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  backdrop-filter: blur(2px);
+  font-family: var(--font-sans);
+}
+
+.shortcuts-modal {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+  width: min(90vw, 480px);
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  font-family: var(--font-sans);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+}
+
+.shortcuts-header {
+  display: flex;
+  align-items: center;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border-primary);
+  flex-shrink: 0;
+}
+
+.shortcuts-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  flex: 1;
+  margin: 0;
+}
+
+.shortcuts-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  padding: 0;
+  transition: all var(--transition-fast);
+}
+
+.shortcuts-close:hover {
+  background: var(--bg-hover);
+  color: var(--danger);
+  border-color: var(--danger-border);
+}
+
+.shortcuts-body {
+  padding: 12px 18px;
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.shortcuts-section-header {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-tertiary);
+  padding: 10px 0 4px;
+  border-bottom: 1px solid var(--border-subtle);
+  margin-bottom: 4px;
+}
+
+.shortcuts-section-header:first-child {
+  padding-top: 0;
+}
+
+.shortcuts-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 0;
+}
+
+.shortcuts-kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-surface-alt);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-sm);
+  padding: 2px 7px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  flex-shrink: 0;
+  min-width: 180px;
+  box-shadow: 0 1px 0 var(--border-secondary);
+}
+
+.shortcuts-kbd-sm {
+  min-width: auto;
+  padding: 1px 5px;
+  font-size: 10px;
+}
+
+.shortcuts-action {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.shortcuts-footer {
+  padding: 10px 18px;
+  border-top: 1px solid var(--border-primary);
+  font-size: 11px;
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+}
+
+[data-theme="swiss"] .shortcuts-modal {
+  border-radius: 0;
+  border-width: 2px;
 }

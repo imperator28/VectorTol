@@ -8,8 +8,10 @@ import { Toolbar } from './components/toolbar/Toolbar';
 import { VisualCanvas } from './components/canvas/VisualCanvas';
 import { CanvasToolbar } from './components/canvas/CanvasToolbar';
 import { TutorialOverlay } from './components/tutorial/TutorialOverlay';
+import { ShortcutsModal } from './components/ui/ShortcutsModal';
 import { useThemeStore } from './store/themeStore';
 import { useTutorialStore, TUTORIAL_STORAGE_KEY } from './store/tutorialStore';
+import { useUiStore } from './store/uiStore';
 import { Icon } from './components/ui/Icon';
 import './App.css';
 
@@ -34,6 +36,8 @@ const MIN_ADVISOR_PX  = 60;
 
 export function App() {
   const themeMode = useThemeStore((s) => s.mode);
+  const shortcutsOpen = useUiStore((s) => s.shortcutsOpen);
+  const setShortcutsOpen = useUiStore((s) => s.setShortcutsOpen);
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', themeMode);
   }, [themeMode]);
@@ -60,6 +64,7 @@ export function App() {
   const [allocPx, setAllocPx] = useState(DEFAULT_ALLOC_PX);
   const [allocCollapsed, setAllocCollapsed] = useState(false);
   const [advisorCollapsed, setAdvisorCollapsed] = useState(false);
+  const [resultsCollapsed, setResultsCollapsed] = useState(false);
   const draggingRight = useRef(false);
   const draggingResults = useRef(false);
   const draggingAlloc = useRef(false);
@@ -132,17 +137,11 @@ export function App() {
           {/* Canvas — collapsible */}
           <div
             className="pane-label-bar"
-            onClick={() => canvasCollapsed && setCanvasCollapsed(false)}
-            style={canvasCollapsed ? { cursor: 'pointer' } : undefined}
+            onClick={() => setCanvasCollapsed((v) => !v)}
+            style={{ cursor: 'pointer' }}
           >
             <span className="pane-label-text">Canvas</span>
-            <button
-              className="pane-toggle-btn"
-              onClick={(e) => { e.stopPropagation(); setCanvasCollapsed(!canvasCollapsed); }}
-              title={canvasCollapsed ? 'Expand canvas' : 'Collapse canvas'}
-            >
-              <Icon name={canvasCollapsed ? 'chevron-down' : 'chevron-up'} size={12} />
-            </button>
+            <Icon name={canvasCollapsed ? 'chevron-down' : 'chevron-up'} size={12} className="pane-toggle-btn-icon" />
           </div>
           {!canvasCollapsed && (
             <>
@@ -179,14 +178,25 @@ export function App() {
             </div>
           </div>
 
-          {/* 2. Analysis Results — resizable, divider at bottom */}
-          <div className="rp-section" style={{ height: resultsPx }} data-tour="analysis-results">
-            <div className="rp-label-bar">
+          {/* 2. Analysis Results — collapsible + resizable, divider at bottom */}
+          <div
+            className="rp-section"
+            style={resultsCollapsed ? undefined : { height: resultsPx }}
+            data-tour="analysis-results"
+          >
+            <div
+              className="rp-label-bar rp-label-bar-toggle"
+              onClick={() => setResultsCollapsed((v) => !v)}
+              style={{ cursor: 'pointer' }}
+            >
               <span className="rp-label-text">Analysis Results</span>
+              <Icon name={resultsCollapsed ? 'chevron-down' : 'chevron-up'} size={12} className="pane-toggle-btn-icon" />
             </div>
-            <div className="rp-content">
-              <ResultsFooter />
-            </div>
+            {!resultsCollapsed && (
+              <div className="rp-content">
+                <ResultsFooter />
+              </div>
+            )}
           </div>
           <div
             className="rp-divider"
@@ -202,17 +212,11 @@ export function App() {
           >
             <div
               className="rp-label-bar rp-label-bar-toggle"
-              onClick={() => allocCollapsed && setAllocCollapsed(false)}
-              style={allocCollapsed ? { cursor: 'pointer' } : undefined}
+              onClick={() => setAllocCollapsed((v) => !v)}
+              style={{ cursor: 'pointer' }}
             >
               <span className="rp-label-text">Tolerance Allocation</span>
-              <button
-                className="pane-toggle-btn"
-                onClick={(e) => { e.stopPropagation(); setAllocCollapsed(!allocCollapsed); }}
-                title={allocCollapsed ? 'Expand' : 'Collapse'}
-              >
-                <Icon name={allocCollapsed ? 'chevron-down' : 'chevron-up'} size={12} />
-              </button>
+              <Icon name={allocCollapsed ? 'chevron-down' : 'chevron-up'} size={12} className="pane-toggle-btn-icon" />
             </div>
             {!allocCollapsed && (
               <div className="rp-content">
@@ -235,17 +239,11 @@ export function App() {
           >
             <div
               className="rp-label-bar rp-label-bar-toggle"
-              onClick={() => advisorCollapsed && setAdvisorCollapsed(false)}
-              style={advisorCollapsed ? { cursor: 'pointer' } : undefined}
+              onClick={() => setAdvisorCollapsed((v) => !v)}
+              style={{ cursor: 'pointer' }}
             >
               <span className="rp-label-text">Nominal Advisor</span>
-              <button
-                className="pane-toggle-btn"
-                onClick={(e) => { e.stopPropagation(); setAdvisorCollapsed(!advisorCollapsed); }}
-                title={advisorCollapsed ? 'Expand' : 'Collapse'}
-              >
-                <Icon name={advisorCollapsed ? 'chevron-down' : 'chevron-up'} size={12} />
-              </button>
+              <Icon name={advisorCollapsed ? 'chevron-down' : 'chevron-up'} size={12} className="pane-toggle-btn-icon" />
             </div>
             {!advisorCollapsed && (
               <div className="rp-content">
@@ -256,6 +254,7 @@ export function App() {
 
         </div>
       </div>
+      {shortcutsOpen && <ShortcutsModal onClose={() => setShortcutsOpen(false)} />}
       <TutorialOverlay />
     </div>
   );

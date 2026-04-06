@@ -17,7 +17,6 @@ function formatPct(rate: number): string {
   return `${(rate * 100).toFixed(2)}%`;
 }
 
-// ── Plot expand modal ────────────────────────────────────────────────────────
 function PlotModal({
   title,
   children,
@@ -57,35 +56,26 @@ export function ResultsFooter() {
     );
   }
 
-  // Build target range subtitle
   const lo = target.minGap;
   const hi = target.maxGap;
   let targetRange = '';
-  if (lo !== null && hi !== null) {
-    targetRange = `${lo} to ${hi}`;
-  } else if (lo !== null) {
-    targetRange = `min ${lo}`;
-  } else if (hi !== null) {
-    targetRange = `max ${hi}`;
-  }
+  if (lo !== null && hi !== null) targetRange = `${lo} to ${hi}`;
+  else if (lo !== null) targetRange = `min ${lo}`;
+  else if (hi !== null) targetRange = `max ${hi}`;
 
   return (
     <McProvider>
       <div className="results-footer">
-        {/* Cards row — CSS grid for consistent sizing */}
+        {/* Analysis cards */}
         <div className="results-cards">
-          {/* Gap card — with target context */}
           <div className="result-card">
             <h4>Gap</h4>
             <span className="result-value result-value-lg">{fmt(results.gap)}</span>
             {targetRange && (
-              <span className="result-subtitle">
-                {target.type}: {targetRange}
-              </span>
+              <span className="result-subtitle">{target.type}: {targetRange}</span>
             )}
           </div>
 
-          {/* Worst Case — verdict-first layout */}
           <div className="result-card">
             <div className="result-card-header">
               <h4>Worst Case</h4>
@@ -102,7 +92,6 @@ export function ResultsFooter() {
             </table>
           </div>
 
-          {/* RSS — verdict-first layout */}
           <div className="result-card">
             <div className="result-card-header">
               <h4>RSS</h4>
@@ -119,10 +108,11 @@ export function ResultsFooter() {
             </table>
           </div>
 
-          {/* RSS Yield — yield as primary value */}
           <div className="result-card">
             <h4>RSS Yield</h4>
-            <span className="result-value result-value-lg result-yield">{results.rssYieldPercent.toFixed(2)}%</span>
+            <span className="result-value result-value-lg result-yield">
+              {results.rssYieldPercent.toFixed(2)}%
+            </span>
             <table className="results-table">
               <tbody>
                 <tr><td>F/R</td><td className="result-value">{formatPct(results.rssFailureRate)}</td></tr>
@@ -133,41 +123,57 @@ export function ResultsFooter() {
           <MonteCarloPanel mode="card" />
         </div>
 
-        {/* Plot cards — each in a result-card with expand button */}
+        {/* Plot preview cards — mini sparklines with expand */}
         <div className="results-plot-cards">
-          {/* RSS Distribution plot card */}
-          <div className="result-card result-card-plot">
+          {/* RSS Distribution mini card */}
+          <div
+            className="result-card result-card-plot result-card-clickable"
+            onClick={() => setExpandedPlot('dist')}
+            title="Click to expand RSS distribution"
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => e.key === 'Enter' && setExpandedPlot('dist')}
+          >
             <div className="result-card-header">
               <h4>RSS Distribution</h4>
+              <span className="plot-expand-hint">click to expand</span>
               <button
                 className="plot-expand-btn"
-                onClick={() => setExpandedPlot('dist')}
-                title="Enlarge plot"
+                onClick={(e) => { e.stopPropagation(); setExpandedPlot('dist'); }}
+                title="Expand"
                 aria-label="Expand RSS distribution plot"
               >
                 <Icon name="maximize" size={10} />
               </button>
             </div>
-            <div className="result-card-plot-body">
-              <DistributionPlot />
+            <div className="result-card-mini-plot">
+              <DistributionPlot mini />
             </div>
           </div>
 
-          {/* Monte Carlo plot card */}
-          <div className="result-card result-card-plot">
+          {/* Monte Carlo mini card */}
+          <div
+            className="result-card result-card-plot result-card-clickable"
+            onClick={() => setExpandedPlot('mc')}
+            title="Click to expand Monte Carlo simulation"
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => e.key === 'Enter' && setExpandedPlot('mc')}
+          >
             <div className="result-card-header">
               <h4>Monte Carlo</h4>
+              <span className="plot-expand-hint">click to expand</span>
               <button
                 className="plot-expand-btn"
-                onClick={() => setExpandedPlot('mc')}
-                title="Enlarge plot"
+                onClick={(e) => { e.stopPropagation(); setExpandedPlot('mc'); }}
+                title="Expand"
                 aria-label="Expand Monte Carlo plot"
               >
                 <Icon name="maximize" size={10} />
               </button>
             </div>
-            <div className="result-card-plot-body">
-              <MonteCarloPanel mode="plot" />
+            <div className="result-card-mini-plot">
+              <MonteCarloPanel mode="mini" />
             </div>
           </div>
         </div>
@@ -180,7 +186,9 @@ export function ResultsFooter() {
         )}
         {expandedPlot === 'mc' && (
           <PlotModal title="Monte Carlo Simulation" onClose={() => setExpandedPlot(null)}>
-            <MonteCarloPanel mode="plot" />
+            <McProvider>
+              <MonteCarloPanel mode="full" />
+            </McProvider>
           </PlotModal>
         )}
       </div>

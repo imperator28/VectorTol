@@ -37,6 +37,7 @@ export function Toolbar() {
   const markClean = useProjectStore((s) => s.markClean);
   const setMetadata = useProjectStore((s) => s.setMetadata);
   const selectedRowId = useUiStore((s) => s.selectedRowId);
+  const setShortcutsOpen = useUiStore((s) => s.setShortcutsOpen);
   const themeMode = useThemeStore((s) => s.mode);
   const toggleTheme = useThemeStore((s) => s.toggle);
   const startTutorial = useTutorialStore((s) => s.start);
@@ -203,6 +204,11 @@ export function Toolbar() {
           title="Author"
         />
         {isDirty && <span className="toolbar-dirty">unsaved</span>}
+        <Tooltip content="View all keyboard shortcuts (?)" placement="bottom">
+          <button className="theme-toggle" onClick={() => setShortcutsOpen(true)} title="Keyboard shortcuts">
+            <Icon name="keyboard" size={16} />
+          </button>
+        </Tooltip>
         <Tooltip content="Start the interactive tutorial to learn VectorTol features." placement="bottom">
           <button
             className="theme-toggle"

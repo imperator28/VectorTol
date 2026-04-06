@@ -42,6 +42,7 @@ export function VisualCanvas() {
   const snapEnabled = useUiStore((s) => s.snapEnabled);
   const toggleDirectionLock = useUiStore((s) => s.toggleDirectionLock);
   const toggleSnap = useUiStore((s) => s.toggleSnap);
+  const setShortcutsOpen = useUiStore((s) => s.setShortcutsOpen);
 
   // Canvas dimensions
   const [dims, setDims] = useState({ width: 600, height: 400 });
@@ -114,6 +115,7 @@ export function VisualCanvas() {
         setSnapIndicator(null);
         setSelectedRowId(null);
       }
+      if (e.key === '?') { e.preventDefault(); setShortcutsOpen(true); return; }
     }
 
     function onKeyUp(e: KeyboardEvent) {
@@ -127,7 +129,7 @@ export function VisualCanvas() {
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
     };
-  }, [selectedRowId, canvasTool, spaceToolOverride, setCanvasTool, removeVector, setSelectedRowId, undo, redo, toggleDirectionLock, toggleSnap]);
+  }, [selectedRowId, canvasTool, spaceToolOverride, setCanvasTool, removeVector, setSelectedRowId, undo, redo, toggleDirectionLock, toggleSnap, setShortcutsOpen]);
 
   // Get canvas-space coordinates from the current pointer position
   const getPointerPos = useCallback(() => {

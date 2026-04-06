@@ -83,7 +83,7 @@ function formatTick(v: number): string {
   return v.toFixed(dp);
 }
 
-export function DistributionPlot() {
+export function DistributionPlot({ mini = false }: { mini?: boolean }) {
   const results = useProjectStore((s) => s.results);
   const target = useProjectStore((s) => s.target);
   const rows = useProjectStore((s) => s.rows);
@@ -231,6 +231,9 @@ export function DistributionPlot() {
   }, [results, target, rows, themeMode]);
 
   if (!plotData) {
+    if (mini) {
+      return <svg width="100%" height={44} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid meet" style={{ display: 'block' }} />;
+    }
     return (
       <div className="distribution-plot">
         <svg width="100%" height={H} viewBox={`0 0 ${W} ${H}`}>
@@ -239,6 +242,18 @@ export function DistributionPlot() {
           </text>
         </svg>
       </div>
+    );
+  }
+
+  // ── Mini mode: tiny sparkline, no labels ───────────────────────────────
+  if (mini) {
+    const { fullAreaPath, regionPaths, curvePath, colors: { PASS_FILL, FAIL_FILL, CURVE_STROKE } } = plotData;
+    return (
+      <svg width="100%" height={44} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid meet" style={{ display: 'block' }}>
+        <path d={fullAreaPath} fill={PASS_FILL} />
+        {regionPaths.map((rp, i) => <path key={i} d={rp.d} fill={FAIL_FILL} />)}
+        <path d={curvePath} fill="none" stroke={CURVE_STROKE} strokeWidth={2} />
+      </svg>
     );
   }
 

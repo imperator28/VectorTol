@@ -11,3 +11,17 @@ export function setStageRef(stage: Konva.Stage | null): void {
 export function getStageDataUrl(): string | null {
   return _stage ? _stage.toDataURL({ pixelRatio: 2 }) : null;
 }
+
+/** Compute ImageTransform to fit an image (naturalW x naturalH) into the current stage size */
+export function computeFitTransform(naturalW: number, naturalH: number): { x: number; y: number; scale: number } | null {
+  const stage = _stage;
+  if (!stage) return null;
+  const sw = stage.width();
+  const sh = stage.height();
+  const scaleX = sw / naturalW;
+  const scaleY = sh / naturalH;
+  const scale = Math.min(scaleX, scaleY) * 0.95; // 5% margin
+  const x = (sw - naturalW * scale) / 2;
+  const y = (sh - naturalH * scale) / 2;
+  return { x, y, scale };
+}

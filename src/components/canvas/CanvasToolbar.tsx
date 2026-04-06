@@ -4,6 +4,7 @@ import { useProjectStore } from '../../store/projectStore';
 import type { CanvasTool } from '../../types/canvas';
 import { ColorPickerPopover } from './ColorPickerPopover';
 import { Icon } from '../ui/Icon';
+import { computeFitTransform } from '../../utils/stageRef';
 
 const STROKE_WIDTHS = [1, 2, 3, 4, 5];
 
@@ -26,6 +27,7 @@ export function CanvasToolbar() {
   const toggleSnap = useUiStore((s) => s.toggleSnap);
 
   const setCanvasImage = useProjectStore((s) => s.setCanvasImage);
+  const setImageTransform = useProjectStore((s) => s.setImageTransform);
   const updateVector = useProjectStore((s) => s.updateVector);
   const flipAllDirections = useProjectStore((s) => s.flipAllDirections);
   const canvasData = useProjectStore((s) => s.canvasData);
@@ -51,7 +53,17 @@ export function CanvasToolbar() {
       const file = input.files?.[0];
       if (!file) return;
       const reader = new FileReader();
-      reader.onload = () => setCanvasImage(reader.result as string);
+      reader.onload = () => {
+        const dataUrl = reader.result as string;
+        setCanvasImage(dataUrl);
+        // Auto-fit after image loads
+        const img = new window.Image();
+        img.onload = () => {
+          const fit = computeFitTransform(img.naturalWidth, img.naturalHeight);
+          if (fit) setImageTransform({ x: fit.x, y: fit.y, scale: fit.scale, rotation: 0 });
+        };
+        img.src = dataUrl;
+      };
       reader.readAsDataURL(file);
     };
     input.click();
@@ -167,6 +179,21 @@ export function CanvasToolbar() {
       <span className="canvas-toolbar-sep" />
       <button onClick={handleImageImport} title="Import background image">
         <Icon name="image" size={14} /> Image
+      </button>
+      <button
+        onClick={() => {
+          if (!canvasData.image) return;
+          const img = new window.Image();
+          img.onload = () => {
+            const fit = computeFitTransform(img.naturalWidth, img.naturalHeight);
+            if (fit) setImageTransform({ x: fit.x, y: fit.y, scale: fit.scale, rotation: canvasData.imageTransform.rotation });
+          };
+          img.src = canvasData.image;
+        }}
+        disabled={!canvasData.image}
+        title="Fit image to canvas"
+      >
+        Fit
       </button>
       <span className="canvas-toolbar-hint">Space=pan</span>
     </div>

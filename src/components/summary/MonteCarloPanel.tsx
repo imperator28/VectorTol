@@ -289,7 +289,106 @@ function McPlot() {
   return <div className="mc-plot-wrap">{histogramSvg(460)}</div>;
 }
 
+// ── Mini histogram (sparkline for card preview) ──────────────────────────────
+function McMini() {
+  const { result } = useMc();
+  const target = useProjectStore((s) => s.target);
+  const themeMode = useThemeStore((s) => s.mode);
+
+  const svg = useMemo(() => {
+    if (!result || result.histogram.length === 0) return null;
+    const HIST_FILL = css('--plot-pass-fill');
+    const FAIL_FILL = css('--plot-fail-fill');
+    const bins = result.histogram;
+    const xMin = bins[0]!.lo;
+    const xMax = bins[bins.length - 1]!.hi;
+    let yMax = 0;
+    for (const b of bins) if (b.density > yMax) yMax = b.density;
+    yMax *= 1.08;
+
+    const W2 = 200, H2 = 44;
+    const sx = (x: number) => ((x - xMin) / (xMax - xMin)) * W2;
+    const sy = (y: number) => H2 - (y / yMax) * H2;
+
+    const lo = target.minGap !== null ? parseFloat(target.minGap) : null;
+    const hi = target.maxGap !== null ? parseFloat(target.maxGap) : null;
+    const bounds: { value: number; side: 'left' | 'right' }[] = [];
+    switch (target.type) {
+      case 'clearance': if (lo !== null) bounds.push({ value: lo, side: 'left' }); break;
+      case 'interference':
+        if (lo !== null) bounds.push({ value: lo, side: 'right' });
+        if (hi !== null) bounds.push({ value: hi, side: 'left' });
+        break;
+      case 'proud': bounds.push({ value: lo ?? 0, side: 'left' }); break;
+      case 'recess': bounds.push({ value: hi ?? 0, side: 'right' }); break;
+      default:
+        if (lo !== null) bounds.push({ value: lo, side: 'left' });
+        if (hi !== null) bounds.push({ value: hi, side: 'right' });
+    }
+
+    return (
+      <svg width="100%" height={H2} viewBox={`0 0 ${W2} ${H2}`} preserveAspectRatio="xMidYMid meet" style={{ display: 'block' }}>
+        {bins.map((bin, i) => {
+          const mid = (bin.lo + bin.hi) / 2;
+          const isFail = bounds.some((b) => b.side === 'left' ? mid < b.value : mid > b.value);
+          return (
+            <rect key={i}
+              x={sx(bin.lo)} y={sy(bin.density)}
+              width={Math.max(1, sx(bin.hi) - sx(bin.lo) - 0.5)}
+              height={Math.max(0, sy(0) - sy(bin.density))}
+              fill={isFail ? FAIL_FILL : HIST_FILL} />
+          );
+        })}
+      </svg>
+    );
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [result, target, themeMode]);
+
+  if (!svg) {
+    return (
+      <div className="mc-mini-empty">Run Monte Carlo to preview</div>
+    );
+  }
+  return <div className="mc-mini-wrap">{svg}</div>;
+}
+
+// ── Full mode: card controls + full histogram stacked ────────────────────────
+function McFull() {
+  const rows = useProjectStore((s) => s.rows);
+  const { result, running, elapsed, iterations, setIterations, handleRun } = useMc();
+
+  return (
+    <div>
+      <div className="mc-controls" style={{ marginBottom: 12 }}>
+        <select value={iterations} onChange={(e) => setIterations(Number(e.target.value))} className="mc-iter-select">
+          {ITERATION_OPTIONS.map((opt) => (
+            <option key={opt.value} value={opt.value}>{opt.label}</option>
+          ))}
+        </select>
+        <button className="mc-run-btn" onClick={handleRun} disabled={running || rows.length === 0}>
+          {running ? '…' : '▶ Run'}
+        </button>
+        {elapsed > 0 && !running && <span className="mc-elapsed">{elapsed}ms</span>}
+      </div>
+      {result && (
+        <table className="results-table" style={{ marginBottom: 12 }}>
+          <tbody>
+            <tr><td>Mean:</td><td className="result-value">{formatNum(result.mean)}</td></tr>
+            <tr><td>Std Dev:</td><td className="result-value">{formatNum(result.stdDev)}</td></tr>
+            <tr><td>Yield:</td><td className="result-value">{result.yieldPercent.toFixed(4)}%</td></tr>
+            <tr><td>F/R:</td><td className="result-value">{formatPct(result.failureRate)}</td></tr>
+          </tbody>
+        </table>
+      )}
+      <McPlot />
+    </div>
+  );
+}
+
 // ── Public component with mode switch ───────────────────────────────────────
-export function MonteCarloPanel({ mode }: { mode: 'card' | 'plot' }) {
-  return mode === 'card' ? <McCard /> : <McPlot />;
+export function MonteCarloPanel({ mode }: { mode: 'card' | 'plot' | 'mini' | 'full' }) {
+  if (mode === 'card') return <McCard />;
+  if (mode === 'mini') return <McMini />;
+  if (mode === 'full') return <McFull />;
+  return <McPlot />;
 }
