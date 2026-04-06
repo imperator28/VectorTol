@@ -43,6 +43,7 @@ const PATHS: Record<string, string> = {
   'panel-top': 'M3 3h18v18H3V3ZM3 9h18',
   'panel-bottom': 'M3 3h18v18H3V3ZM3 15h18',
   maximize: 'M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3',
+  'help-circle': 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20ZM12 16v-4M12 8h.01',
 };
 
 interface IconProps {

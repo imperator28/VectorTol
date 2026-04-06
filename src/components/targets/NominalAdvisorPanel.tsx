@@ -9,6 +9,7 @@ import type {
   NominalChange,
   NominalAdvisorResult,
 } from '../../engine/standards';
+import { Icon } from '../ui/Icon';
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
@@ -156,6 +157,40 @@ function NominalStrategyCard({
   );
 }
 
+// ── lock chip ─────────────────────────────────────────────────────────────────
+
+function DimLockChip({
+  id,
+  label,
+  nominal,
+  stars,
+  locked,
+  onToggle,
+}: {
+  id: string;
+  label: string;
+  nominal: number;
+  stars: string;
+  locked: boolean;
+  onToggle: (id: string) => void;
+}) {
+  return (
+    <div className={`na-dim-chip ${locked ? 'na-dim-chip-locked' : ''}`}>
+      <button
+        className={`na-dim-lock-btn ${locked ? 'na-dim-lock-btn-on' : ''}`}
+        onClick={() => onToggle(id)}
+        title={locked ? 'Locked — click to unlock and allow adjustment' : 'Unlocked — click to lock this dimension (tooling/material constraint)'}
+        aria-label={locked ? 'Unlock dimension' : 'Lock dimension'}
+      >
+        <Icon name={locked ? 'lock' : 'unlock'} size={11} />
+      </button>
+      <span className="na-dim-chip-label" title={label}>{label || '—'}</span>
+      <span className="na-dim-chip-nom">{fmtDim(nominal, 3)}</span>
+      <span className="na-dim-chip-stars" title="Adjustability">{stars}</span>
+    </div>
+  );
+}
+
 // ── main panel ────────────────────────────────────────────────────────────────
 
 export function NominalAdvisorPanel() {
@@ -163,7 +198,7 @@ export function NominalAdvisorPanel() {
   const target    = useProjectStore((s) => s.target);
   const updateRow = useProjectStore((s) => s.updateRow);
 
-  // Locked rows — user-toggled set of row IDs that should not be adjusted
+  // Locked rows — user-toggled set of row IDs excluded from adjustment
   const [lockedIds, setLockedIds] = useState<Set<string>>(new Set());
 
   const toggleLock = useCallback((id: string) => {
@@ -175,12 +210,9 @@ export function NominalAdvisorPanel() {
     });
   }, []);
 
-  const [showAdjTable, setShowAdjTable] = useState(false);
-
   const advisorInput = useMemo(
     () =>
       rows.map((r) => {
-        // Resolve effective half-tolerance (same logic as engine)
         let centeredTol = 0;
         const sym = r.tolSymmetric !== null ? parseFloat(r.tolSymmetric) : NaN;
         const plus  = r.tolPlus   !== null ? parseFloat(r.tolPlus)   : NaN;
@@ -236,8 +268,10 @@ export function NominalAdvisorPanel() {
     bannerMsg   = `✗ Nominal gap off by ${fmtDelta(neededGapShift)} mm`;
   }
 
+  const lockedCount = lockedIds.size;
+
   return (
-    <div className="nominal-advisor-panel">
+    <div className="nominal-advisor-panel" data-tour="nominal-advisor">
       <h3>Nominal Advisor</h3>
 
       {/* Status banner */}
@@ -261,50 +295,33 @@ export function NominalAdvisorPanel() {
         </span>
       </div>
 
-      {/* Adjustability table (collapsible) */}
-      <button
-        className="na-toggle-adj"
-        onClick={() => setShowAdjTable((v) => !v)}
-      >
-        {showAdjTable ? '▴' : '▾'} Part adjustability
-      </button>
-      {showAdjTable && (
-        <table className="na-adj-table">
-          <thead>
-            <tr>
-              <th>Part</th>
-              <th>Nom</th>
-              <th title="Manufacturing adjustability: ★★★ = easy, ☆☆☆ = locked">Adj</th>
-            </tr>
-          </thead>
-          <tbody>
-            {result.rows.map((r) => (
-              <tr
-                key={r.id}
-                className={lockedIds.has(r.id) ? 'na-row-locked' : ''}
-                title={
-                  lockedIds.has(r.id)
-                    ? 'Locked — excluded from suggestions'
-                    : r.adjustabilityNote
-                }
-              >
-                <td className="na-adj-name">
-                  <button
-                    className={`na-lock-btn ${lockedIds.has(r.id) ? 'na-lock-btn-on' : ''}`}
-                    onClick={() => toggleLock(r.id)}
-                    title={lockedIds.has(r.id) ? 'Unlock' : 'Lock (exclude from suggestions)'}
-                  >
-                    {lockedIds.has(r.id) ? '🔒' : '🔓'}
-                  </button>
-                  {r.component || r.dimId || '—'}
-                </td>
-                <td className="na-adj-nom">{fmtDim(r.nominal)}</td>
-                <td className="na-adj-stars">{adjustabilityStars(r.adjustabilityScore)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+      {/* Dimension lock list — always visible */}
+      <div className="na-lock-section">
+        <div className="na-lock-section-header">
+          <span className="na-lock-section-title">
+            <Icon name="lock" size={10} /> Dimension Locks
+          </span>
+          {lockedCount > 0 && (
+            <span className="na-lock-count-badge">{lockedCount} locked</span>
+          )}
+          <span className="na-lock-section-hint">
+            Lock dimensions that can't change (tooling / material)
+          </span>
+        </div>
+        <div className="na-dim-chip-list">
+          {result.rows.map((r) => (
+            <DimLockChip
+              key={r.id}
+              id={r.id}
+              label={r.component || r.dimId || '—'}
+              nominal={r.nominal}
+              stars={adjustabilityStars(r.adjustabilityScore)}
+              locked={lockedIds.has(r.id)}
+              onToggle={toggleLock}
+            />
+          ))}
+        </div>
+      </div>
 
       {/* Strategy cards */}
       {result.strategies.length > 0 ? (
@@ -322,7 +339,7 @@ export function NominalAdvisorPanel() {
         <p className="na-all-ok">Nominal gap satisfies design intent. No changes needed.</p>
       ) : (
         <p className="na-advisory">
-          💡 No adjustable dimensions found. Lock fewer rows or add an assembly gap row.
+          💡 No adjustable dimensions found. Unlock more rows or add an assembly gap row.
         </p>
       )}
     </div>

@@ -7,7 +7,9 @@ import { ResultsFooter } from './components/summary/ResultsFooter';
 import { Toolbar } from './components/toolbar/Toolbar';
 import { VisualCanvas } from './components/canvas/VisualCanvas';
 import { CanvasToolbar } from './components/canvas/CanvasToolbar';
+import { TutorialOverlay } from './components/tutorial/TutorialOverlay';
 import { useThemeStore } from './store/themeStore';
+import { useTutorialStore, TUTORIAL_STORAGE_KEY } from './store/tutorialStore';
 import { Icon } from './components/ui/Icon';
 import './App.css';
 
@@ -35,6 +37,16 @@ export function App() {
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', themeMode);
   }, [themeMode]);
+
+  // ── Tutorial auto-start on first load ────────────────────────────────────
+  const startTutorial = useTutorialStore((s) => s.start);
+  useEffect(() => {
+    const seen = localStorage.getItem(TUTORIAL_STORAGE_KEY);
+    if (!seen) {
+      const timer = setTimeout(() => startTutorial(), 400);
+      return () => clearTimeout(timer);
+    }
+  }, [startTutorial]);
 
   // ── Workspace (left) state ───────────────────────────────────────────────
   const [canvasPct, setCanvasPct] = useState(DEFAULT_CANVAS_PCT);
@@ -134,7 +146,7 @@ export function App() {
           </div>
           {!canvasCollapsed && (
             <>
-              <div className="canvas-pane" style={{ height: `${canvasPct}%` }}>
+              <div className="canvas-pane" style={{ height: `${canvasPct}%` }} data-tour="canvas">
                 <CanvasToolbar />
                 <VisualCanvas />
               </div>
@@ -146,7 +158,7 @@ export function App() {
           <div className="pane-label-bar pane-label-bar-grid">
             <span className="pane-label-text">Stack-up</span>
           </div>
-          <div className="grid-pane">
+          <div className="grid-pane" data-tour="grid">
             <StackGrid />
           </div>
         </div>
@@ -158,7 +170,7 @@ export function App() {
         <div className="insights-panel" style={{ width: rightPanelPx }}>
 
           {/* 1. Design Intent — compact, auto height */}
-          <div className="rp-section rp-section-intent">
+          <div className="rp-section rp-section-intent" data-tour="design-intent">
             <div className="rp-label-bar">
               <span className="rp-label-text">Design Intent</span>
             </div>
@@ -168,7 +180,7 @@ export function App() {
           </div>
 
           {/* 2. Analysis Results — resizable, divider at bottom */}
-          <div className="rp-section" style={{ height: resultsPx }}>
+          <div className="rp-section" style={{ height: resultsPx }} data-tour="analysis-results">
             <div className="rp-label-bar">
               <span className="rp-label-text">Analysis Results</span>
             </div>
@@ -186,6 +198,7 @@ export function App() {
           <div
             className="rp-section"
             style={allocCollapsed ? undefined : { height: allocPx }}
+            data-tour="tolerance-allocation"
           >
             <div
               className="rp-label-bar rp-label-bar-toggle"
@@ -218,6 +231,7 @@ export function App() {
           <div
             className="rp-section rp-section-flex"
             style={{ minHeight: advisorCollapsed ? 0 : MIN_ADVISOR_PX }}
+            data-tour="nominal-advisor"
           >
             <div
               className="rp-label-bar rp-label-bar-toggle"
@@ -242,6 +256,7 @@ export function App() {
 
         </div>
       </div>
+      <TutorialOverlay />
     </div>
   );
 }

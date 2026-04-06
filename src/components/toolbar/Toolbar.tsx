@@ -2,11 +2,13 @@ import { useCallback } from 'react';
 import { useProjectStore } from '../../store/projectStore';
 import { useUiStore } from '../../store/uiStore';
 import { useThemeStore } from '../../store/themeStore';
+import { useTutorialStore } from '../../store/tutorialStore';
 import { serializeProject, deserializeProject, rowsToCsv } from '../../utils/fileIO';
 import { getStageDataUrl } from '../../utils/stageRef';
 import { exportPdf } from '../../utils/pdfExport';
 import { exportXlsx } from '../../utils/xlsxExport';
 import { Icon } from '../ui/Icon';
+import { Tooltip } from '../ui/Tooltip';
 
 const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
 
@@ -37,6 +39,7 @@ export function Toolbar() {
   const selectedRowId = useUiStore((s) => s.selectedRowId);
   const themeMode = useThemeStore((s) => s.mode);
   const toggleTheme = useThemeStore((s) => s.toggle);
+  const startTutorial = useTutorialStore((s) => s.start);
 
   const handleNew = useCallback(() => {
     if (isDirty && !window.confirm('Unsaved changes will be lost. Continue?')) return;
@@ -137,36 +140,52 @@ export function Toolbar() {
   }, [rows, derivedRows, results, metadata.projectName]);
 
   return (
-    <div className="toolbar">
+    <div className="toolbar" data-tour="toolbar">
       <div className="toolbar-group">
-        <button onClick={handleNew} title="New Project">
-          <Icon name="file-plus" size={14} /> New
-        </button>
-        <button onClick={handleOpen} title="Open .vtol file">
-          <Icon name="folder-open" size={14} /> Open
-        </button>
-        <button onClick={handleSave} title="Save as .vtol file">
-          <Icon name="save" size={14} /> Save{isDirty ? ' *' : ''}
-        </button>
+        <Tooltip content="Create a blank project. Unsaved changes will be lost." placement="bottom">
+          <button onClick={handleNew}>
+            <Icon name="file-plus" size={14} /> New
+          </button>
+        </Tooltip>
+        <Tooltip content="Open a saved .vtol project file from your computer." placement="bottom">
+          <button onClick={handleOpen}>
+            <Icon name="folder-open" size={14} /> Open
+          </button>
+        </Tooltip>
+        <Tooltip content="Save the current project as a .vtol file (includes canvas, grid data, and settings)." placement="bottom">
+          <button onClick={handleSave}>
+            <Icon name="save" size={14} /> Save{isDirty ? ' *' : ''}
+          </button>
+        </Tooltip>
       </div>
       <div className="toolbar-group">
-        <button onClick={addRow} title="Add Row">
-          <Icon name="row-plus" size={14} /> Row
-        </button>
-        <button onClick={handleDeleteRow} title="Delete Selected Row">
-          <Icon name="row-minus" size={14} /> Row
-        </button>
+        <Tooltip content="Add a new dimension row to the stack-up." placement="bottom">
+          <button onClick={addRow}>
+            <Icon name="row-plus" size={14} /> Row
+          </button>
+        </Tooltip>
+        <Tooltip content="Delete the currently selected row from the grid." placement="bottom">
+          <button onClick={handleDeleteRow}>
+            <Icon name="row-minus" size={14} /> Row
+          </button>
+        </Tooltip>
       </div>
       <div className="toolbar-group">
-        <button onClick={handleExportPdf} title="Export PDF Report">
-          <Icon name="file-pdf" size={14} /> PDF
-        </button>
-        <button onClick={handleExportXlsx} title="Export Excel">
-          <Icon name="file-table" size={14} /> XLSX
-        </button>
-        <button onClick={handleExportCsv} title="Export CSV">
-          <Icon name="file-code" size={14} /> CSV
-        </button>
+        <Tooltip content="Export a PDF report with title block, annotated canvas, data table, and WC/RSS results." placement="bottom">
+          <button onClick={handleExportPdf}>
+            <Icon name="file-pdf" size={14} /> PDF
+          </button>
+        </Tooltip>
+        <Tooltip content="Export an Excel workbook with all grid columns and analysis results." placement="bottom">
+          <button onClick={handleExportXlsx}>
+            <Icon name="file-table" size={14} /> XLSX
+          </button>
+        </Tooltip>
+        <Tooltip content="Export raw stack-up data as a CSV file." placement="bottom">
+          <button onClick={handleExportCsv}>
+            <Icon name="file-code" size={14} /> CSV
+          </button>
+        </Tooltip>
       </div>
       <div className="toolbar-meta">
         <input
@@ -184,24 +203,38 @@ export function Toolbar() {
           title="Author"
         />
         {isDirty && <span className="toolbar-dirty">unsaved</span>}
-        <button
-          className="theme-toggle"
-          onClick={toggleTheme}
-          title={
+        <Tooltip content="Start the interactive tutorial to learn VectorTol features." placement="bottom">
+          <button
+            className="theme-toggle"
+            onClick={startTutorial}
+            title="Open tutorial"
+            style={{ marginRight: 2 }}
+          >
+            <Icon name="help-circle" size={16} />
+          </button>
+        </Tooltip>
+        <Tooltip
+          content={
             themeMode === 'light' ? 'Switch to dark mode' :
-            themeMode === 'dark' ? 'Switch to Swiss mode' :
+            themeMode === 'dark' ? 'Switch to Swiss International (high-contrast) theme' :
             'Switch to light mode'
           }
+          placement="bottom"
         >
-          <Icon
-            name={
-              themeMode === 'light' ? 'moon' :
-              themeMode === 'dark' ? 'swiss' :
-              'sun'
-            }
-            size={16}
-          />
-        </button>
+          <button
+            className="theme-toggle"
+            onClick={toggleTheme}
+          >
+            <Icon
+              name={
+                themeMode === 'light' ? 'moon' :
+                themeMode === 'dark' ? 'swiss' :
+                'sun'
+              }
+              size={16}
+            />
+          </button>
+        </Tooltip>
       </div>
     </div>
   );
